@@ -15,10 +15,13 @@ int main(int argc, char** argv) {
 	cv::Mat input;
 	cv::Mat inputCh[3];
 	cv::Mat recon;
+	bool marioSmallInFrame = true;
+	bool marioBigInFrame = false;
+
 	std::vector<cv::Mat> spriteList = getSpriteList(WorldType::OVERWORLD);
 
-	cv::namedWindow("Input", cv::WINDOW_AUTOSIZE);
-	// cv::namedWindow("Recon", cv::WINDOW_AUTOSIZE);
+	// cv::namedWindow("Input", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Recon", cv::WINDOW_AUTOSIZE);
 
 	cap.open(argv[1]);
 	if (!cap.isOpened()) {
@@ -37,9 +40,29 @@ int main(int argc, char** argv) {
 			break;
 		}
 
+		// recon = input.clone();
+		// recon.setTo(cv::Scalar(0,0,0));
+
 		// Redeclare the enemy bounding boxes for each frame
+		// std::cout << spriteList.size() << std::endl;
 		std::vector<cv::Rect> enemyBoundingBoxes;
-		findEnemyTemplateInFrame(input, spriteList.front(), enemyBoundingBoxes, cv::Scalar(0, 255, 255), CV_TM_SQDIFF, 780000);
+		for (int i = 0; i < spriteList.size(); i++) {
+			// std::cout << i << std::endl;
+			// 780000
+			findEnemyTemplateInFrame(input, spriteList[i], enemyBoundingBoxes, cv::Scalar(0, 255, i*10), CV_TM_SQDIFF, 150000);
+		}
+
+		if (marioSmallInFrame) {
+			
+		}
+		else if (marioBigInFrame) {
+
+		}
+
+		for (int i = 0; i < enemyBoundingBoxes.size(); i++) {
+			cv::rectangle(recon, enemyBoundingBoxes[i], cv::Scalar(127,127,127));
+		}
+		// findEnemyTemplateInFrame(input, spriteList.front(), enemyBoundingBoxes, cv::Scalar(0, 255, 255), CV_TM_SQDIFF, 780000);
 
 		// cv::cvtColor(input, input, cv::COLOR_BGR2HSV);
 		// cv::split(input, inputCh);
@@ -53,8 +76,9 @@ int main(int argc, char** argv) {
 		//}
 
 		cv::imshow("Image", input);
+		// cv::imshow("Recon", recon);
 		// cv::imshow("Template Tracking", tmp);
-		if (cv::waitKey(30) == 27) {
+		if (cv::waitKey(1) == 27) {
 			break;
 		}
 	}
@@ -93,6 +117,7 @@ void findEnemyTemplateInFrame(cv::Mat image, cv::Mat enemyTemplate, std::vector<
 
 	// Try and find the first enemy template
 	cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
+	std::cout << minVal << std::endl;
 
 	// TODO - allow for max match technique
 	while (minVal < threshold) {
@@ -113,7 +138,7 @@ void findEnemyTemplateInFrame(cv::Mat image, cv::Mat enemyTemplate, std::vector<
 		cv::rectangle(image, matchLoc, cv::Point(matchLoc.x + enemyTemplate.cols, matchLoc.y + enemyTemplate.rows), drawColor, 2, 8, 0);
 
 		// Fill in our result to remove previously tracked objects
-		cv::floodFill(result, matchLoc, cv::Scalar(780000), 0);
+		cv::floodFill(result, matchLoc, cv::Scalar(threshold), 0);
 
 		// Find the next template
 		cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
@@ -130,44 +155,51 @@ std::vector<cv::Mat> getSpriteList(WorldType world) {
 	else {
 		worldStr = "underworld";
 	}
-	list.push_back(cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png"));
-	list.push_back(cv::imread("sprites/enemies/" + worldStr + "/goomba1.png"));
-	list.push_back(cv::imread("sprites/enemies/" + worldStr + "/goomba2.png"));
-	list.push_back(cv::imread("sprites/enemies/" + worldStr + "/goomba-flat.png"));
-	list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa1.png"));
-	list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa2.png"));
-	list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa3.png"));
-	list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa4.png"));
-	list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa-shell.png"));
-	list.push_back(cv::imread("sprites/enemies/shared/koopa1.png"));
-	list.push_back(cv::imread("sprites/enemies/shared/koopa2.png"));
-	list.push_back(cv::imread("sprites/enemies/shared/koopa3.png"));
-	list.push_back(cv::imread("sprites/enemies/shared/koopa4.png"));
-	list.push_back(cv::imread("sprites/enemies/shared/koopa-shell.png"));
-	list.push_back(cv::imread("sprites/enemies/" + worldStr + "/shell.png"));
-	list.push_back(cv::imread("sprites/enemies/shared/shell.png"));
-	list.push_back(cv::imread("sprites/enemies/" + worldStr + "/piranha1.png"));
-	list.push_back(cv::imread("sprites/enemies/" + worldStr + "/piranha2.png"));
-	list.push_back(cv::imread("sprites/misc/" + worldStr + "/brick1.png"));
-	list.push_back(cv::imread("sprites/misc/" + worldStr + "/brick2.png"));
-	list.push_back(cv::imread("sprites/misc/" + worldStr + "/question1.png"));
-	list.push_back(cv::imread("sprites/misc/" + worldStr + "/question2.png"));
-	list.push_back(cv::imread("sprites/misc/" + worldStr + "/question3.png"));
-	list.push_back(cv::imread("sprites/misc/" + worldStr + "/rock.png"));
-	list.push_back(cv::imread("sprites/misc/" + worldStr + "/block-chiseled.png"));
-	list.push_back(cv::imread("sprites/misc/" + worldStr + "/used-block.png"));
-	list.push_back(cv::imread("sprites/misc/" + worldStr + "/flagpole.png"));
-	list.push_back(cv::imread("sprites/misc/shared/beam-short.png"));
-	list.push_back(cv::imread("sprites/misc/shared/beam-medium.png"));
-	list.push_back(cv::imread("sprites/misc/shared/beam-long.png"));
-	list.push_back(cv::imread("sprites/misc/shared/pipe-up.png"));
-	list.push_back(cv::imread("sprites/misc/shared/pipe-down.png"));
-	list.push_back(cv::imread("sprites/misc/shared/pipe-left.png"));
-	list.push_back(cv::imread("sprites/misc/shared/pipe-t.png"));
-	list.push_back(cv::imread("sprites/misc/shared/pipe-tess.png"));
-	list.push_back(cv::imread("sprites/powerups/shared/mushroom.png"));
+
+	// It works for overworld
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png"));
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa-left-template.png"));
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/goomba1.png"));
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/goomba2.png"));
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/goomba-flat.png"));
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa1.png"));
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa2.png"));
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa3.png"));
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa4.png"));
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa-shell.png"));
+	// list.push_back(cv::imread("sprites/enemies/shared/koopa1.png"));
+	// list.push_back(cv::imread("sprites/enemies/shared/koopa2.png"));
+	// list.push_back(cv::imread("sprites/enemies/shared/koopa3.png"));
+	// list.push_back(cv::imread("sprites/enemies/shared/koopa4.png"));
+	// list.push_back(cv::imread("sprites/enemies/shared/koopa-shell.png"));
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/shell.png"));
+	// list.push_back(cv::imread("sprites/enemies/shared/shell.png"));
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/piranha1.png"));
+	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/piranha2.png"));
+	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/brick1.png"));
+	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/brick2.png"));
+	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/question1.png"));
+	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/question2.png"));
+	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/question3.png"));
+	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/rock.png"));
+	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/block-chiseled.png"));
+	list.push_back(cv::imread("sprites/mario/small-mario-template.png"));
+	list.push_back(cv::imread("sprites/mario/small-mario-template-left.png"));
+	list.push_back(cv::imread("sprites/mario/big-mario-normal-template.png"));
+	list.push_back(cv::imread("sprites/mario/big-mario-normal-template-left.png"));
+	/* list.push_back(cv::imread("sprites/misc/" + worldStr + "/used-block.png")); */
+	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/flagpole.png"));
+	// list.push_back(cv::imread("sprites/misc/shared/beam-short.png"));
+	// list.push_back(cv::imread("sprites/misc/shared/beam-medium.png"));
+	// list.push_back(cv::imread("sprites/misc/shared/beam-long.png"));
+	// list.push_back(cv::imread("sprites/misc/shared/pipe-up.png"));
+	// list.push_back(cv::imread("sprites/misc/shared/pipe-down.png"));
+	// list.push_back(cv::imread("sprites/misc/shared/pipe-left.png"));
+	// list.push_back(cv::imread("sprites/misc/shared/pipe-t.png"));
+	// list.push_back(cv::imread("sprites/misc/shared/pipe-tess.png"));
+	// list.push_back(cv::imread("sprites/powerups/shared/mushroom.png"));
 	if (world == WorldType::OVERWORLD) {
-		list.push_back(getHue("sprites/misc/overworld/flagpole.png"));
+		// list.push_back(getHue("sprites/misc/overworld/flagpole.png"));
 	}
 
 	return list;
