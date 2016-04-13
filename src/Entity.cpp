@@ -3,15 +3,16 @@
 
 #include "Entity.h"
 
+// The top left point of the rectangle is where the sprite starts based off of its template
 void Entity::setBoundingBox() {
 	switch (type) {
-	case EntityType::GOOMBA: bbox = cv::Rect(); break;
-	case EntityType::KOOPA_L: bbox = cv::Rect(); break;
-	case EntityType::KOOPA_R: bbox = cv::Rect(); break;
-	case EntityType::KOOPA_RED_L: bbox = cv::Rect(); break;
-	case EntityType::KOOPA_RED_R: bbox = cv::Rect(); break;
-	case EntityType::SHELL: bbox = cv::Rect(); break;
-	case EntityType::SHELL_RED: bbox = cv::Rect(); break;
+	case EntityType::GOOMBA: bbox = cv::Rect(-3, -5, 16, 16); break;
+	case EntityType::KOOPA_L: bbox = cv::Rect(-5, -13, 16, 24); break;
+	case EntityType::KOOPA_R: bbox = cv::Rect(-2, -13, 16, 24); break;
+	case EntityType::KOOPA_RED_L: bbox = cv::Rect(-5, -13, 16, 24); break;
+	case EntityType::KOOPA_RED_R: bbox = cv::Rect(-2, -13, 16, 24); break;
+	case EntityType::SHELL: bbox = cv::Rect(-4, -3, 16, 14); break;
+	case EntityType::SHELL_RED: bbox = cv::Rect(-4, -3, 16, 14); break;
 	case EntityType::PIRANHA: bbox = cv::Rect(); break;
 	case EntityType::BRICK: bbox = cv::Rect(); break;
 	case EntityType::QUESTION: bbox = cv::Rect(); break;
@@ -56,14 +57,14 @@ void fillSpriteTable(WorldType world) {
 
 	if (spriteTable[0].empty()) {
 		// Fill spriteTable
-		/*spriteTable[EntityType::GOOMBA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
+		spriteTable[EntityType::GOOMBA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
 		spriteTable[EntityType::KOOPA_L] = cv::imread("sprites/enemies/" + worldStr + "/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
 		spriteTable[EntityType::KOOPA_R] = cv::imread("sprites/enemies/" + worldStr + "/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
 		spriteTable[EntityType::KOOPA_RED_L] = cv::imread("sprites/enemies/shared/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
 		spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
 		spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png", CV_LOAD_IMAGE_COLOR);
 		spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
-		spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
+		/*spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
 		spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick-template.png", CV_LOAD_IMAGE_COLOR);
 		spriteTable[EntityType::QUESTION]
 		spriteTable[EntityType::ROCK]
