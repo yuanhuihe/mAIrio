@@ -1,5 +1,15 @@
 #include "Entity.h"
 
-class Mario : public Entity {
+enum MarioType {
+	SMALL,
+	BIG,
+	FIRE,
+	DEAD
+};
 
+class Mario : public Entity {
+protected:
+	MarioType m;
+public:
+	cv::Rect update();
 };
