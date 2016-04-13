@@ -10,11 +10,15 @@ enum WorldType {
 };
 
 enum EntityType {
-	MARIO,
+	MARIO = 0,
 	GOOMBA,
-	KOOPA,
+	KOOPA_L,
+	KOOPA_R,
+	KOOPA_RED_L,
+	KOOPA_RED_R,
 	SHELL,
-	PIRANHA,
+	SHELL_RED,
+	PIRANHA, // We're going to check color above pipes to check for Piranhas, not template matching
 	BRICK,
 	QUESTION,
 	ROCK, // Includes chiseled block and used block
@@ -22,27 +26,32 @@ enum EntityType {
 	BEAM,
 	PIPE,
 	MUSHROOM,
-	FIREFLOWER
+	FIREFLOWER,
+	SIZE_ENTITY_TYPE
 };
+
+static cv::Mat spriteTable[EntityType::SIZE_ENTITY_TYPE]; // Global for now
+void fillSpriteTable(WorldType world);
 
 class Entity {
 protected:
 	cv::Point loc;
-	cv::Size size;
-	std::vector<cv::Mat> sprites;
+	cv::Rect bbox;
 	EntityType type;
+	int detThresh;
+	void setDetThresh();
+	void setBoundingBox();
 
 public:
-	Entity(cv::Point loc, cv::Size size, EntityType type);
+	Entity(cv::Point loc, EntityType type);
 
 	cv::Point getLoc();
-	cv::Size getSize();
-	cv::Rect getRect();
-	std::vector<cv::Mat> getSprites();
+	cv::Rect getBBox();
+	cv::Mat getSprite();
+	int getDetThresh();
 	EntityType getType();
 
 	void setLoc(cv::Point loc);
-	void setSize(cv::Size size);
 	void setType(EntityType type);
 
 	bool isPassable();
