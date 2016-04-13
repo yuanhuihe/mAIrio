@@ -55,25 +55,23 @@ void fillSpriteTable(WorldType world) {
 		worldStr = "underworld";
 	}
 
-	if (spriteTable[0].empty()) {
-		// Fill spriteTable
-		spriteTable[EntityType::GOOMBA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
-		spriteTable[EntityType::KOOPA_L] = cv::imread("sprites/enemies/" + worldStr + "/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
-		spriteTable[EntityType::KOOPA_R] = cv::imread("sprites/enemies/" + worldStr + "/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
-		spriteTable[EntityType::KOOPA_RED_L] = cv::imread("sprites/enemies/shared/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
-		spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
-		spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png", CV_LOAD_IMAGE_COLOR);
-		spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
-		/*spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
-		spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick-template.png", CV_LOAD_IMAGE_COLOR);
-		spriteTable[EntityType::QUESTION]
-		spriteTable[EntityType::ROCK]
-		spriteTable[EntityType::FLAGPOLE]
-		spriteTable[EntityType::BEAM]
-		spriteTable[EntityType::PIPE]
-		spriteTable[EntityType::MUSHROOM]
-		spriteTable[EntityType::FIREFLOWER]*/
-	}
+	// Fill spriteTable
+	spriteTable[EntityType::GOOMBA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[EntityType::KOOPA_L] = cv::imread("sprites/enemies/" + worldStr + "/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[EntityType::KOOPA_R] = cv::imread("sprites/enemies/" + worldStr + "/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[EntityType::KOOPA_RED_L] = cv::imread("sprites/enemies/shared/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
+	/*spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick-template.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[EntityType::QUESTION]
+	spriteTable[EntityType::ROCK]
+	spriteTable[EntityType::FLAGPOLE]
+	spriteTable[EntityType::BEAM]
+	spriteTable[EntityType::PIPE]
+	spriteTable[EntityType::MUSHROOM]
+	spriteTable[EntityType::FIREFLOWER]*/
 }
 
 Entity::Entity(cv::Point loc, EntityType type) {
