@@ -3,6 +3,8 @@
 
 #include "Entity.h"
 
+cv::Mat Entity::spriteTable[EntityType::SIZE_ENTITY_TYPE];
+
 // The top left point of the rectangle is where the sprite starts based off of its template
 void Entity::setBoundingBox() {
 	switch (type) {
@@ -25,7 +27,8 @@ void Entity::setBoundingBox() {
 	}
 }
 
-void Entity::setDetThresh() {
+int Entity::getDetThresh(EntityType type) {
+	int detThresh = 0;
 	switch (type) {
 	case EntityType::GOOMBA: detThresh = 150000; break;
 	case EntityType::KOOPA_L: detThresh = 150000; break;
@@ -44,9 +47,10 @@ void Entity::setDetThresh() {
 	case EntityType::MUSHROOM: detThresh = 150000; break;
 	case EntityType::FIREFLOWER: detThresh = 150000; break;
 	}
+	return detThresh;
 }
 
-void fillSpriteTable(WorldType world) {
+void Entity::fillSpriteTable(WorldType world) {
 	std::string worldStr;
 	if (world == WorldType::OVERWORLD) {
 		worldStr = "overworld";
@@ -56,13 +60,13 @@ void fillSpriteTable(WorldType world) {
 	}
 
 	// Fill spriteTable
-	spriteTable[EntityType::GOOMBA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::KOOPA_L] = cv::imread("sprites/enemies/" + worldStr + "/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::KOOPA_R] = cv::imread("sprites/enemies/" + worldStr + "/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::KOOPA_RED_L] = cv::imread("sprites/enemies/shared/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::GOOMBA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::KOOPA_L] = cv::imread("sprites/enemies/" + worldStr + "/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::KOOPA_R] = cv::imread("sprites/enemies/" + worldStr + "/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::KOOPA_RED_L] = cv::imread("sprites/enemies/shared/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
 	/*spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::QUESTION]
@@ -79,8 +83,6 @@ Entity::Entity(cv::Point loc, EntityType type) {
 	this->type = type;
 
 	setBoundingBox();
-
-	setDetThresh();
 }
 
 cv::Point Entity::getLoc() {

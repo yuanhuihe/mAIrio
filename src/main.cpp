@@ -25,7 +25,8 @@ int main(int argc, char** argv) {
 
 	std::vector<cv::Mat> marioTemplates = loadMarioTemplates();
 	int marioThresholds[] = {150000, 150000, 150000, 150000, 150000, 150000};
-	std::vector<cv::Mat> spriteList = getSpriteList(WorldType::OVERWORLD);
+	// std::vector<cv::Mat> spriteList; // = getSpriteList(WorldType::OVERWORLD);
+	Entity::fillSpriteTable(WorldType::OVERWORLD);
 
 	// cv::namedWindow("Input", cv::WINDOW_AUTOSIZE);
 	cv::namedWindow("Recon", cv::WINDOW_AUTOSIZE);
@@ -49,11 +50,12 @@ int main(int argc, char** argv) {
 		}
 
 		std::vector<cv::Rect> enemyBoundingBoxes;
-		/* for (int i = 0; i < spriteList.size(); i++) {
+		for (int i = 0; i < EntityType::PIRANHA; i++) {
 			// 780000
-			findEnemyTemplateInFrame(input, spriteList[i], enemyBoundingBoxes, cv::Scalar(0, 255, i*10), CV_TM_SQDIFF, 150000);
-		} */
+			findEnemyTemplateInFrame(input, Entity::spriteTable[i], enemyBoundingBoxes, cv::Scalar(0, 255, i*10), CV_TM_SQDIFF, Entity::getDetThresh((EntityType) i));
+		}
 
+		/*
 		std::vector<int> marioAttempts;
 
 		while (foundMario != true) {
@@ -121,7 +123,7 @@ int main(int argc, char** argv) {
 				foundMario = true;
 			}
 		}
-
+		*/ 
 		std::cout << std::endl;
 
 		for (int i = 0; i < enemyBoundingBoxes.size(); i++) {

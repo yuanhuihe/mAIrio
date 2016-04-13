@@ -30,25 +30,22 @@ enum EntityType {
 	SIZE_ENTITY_TYPE
 };
 
-static cv::Mat spriteTable[EntityType::SIZE_ENTITY_TYPE]; // Global for now
-void fillSpriteTable(WorldType world);
-
 class Entity {
 protected:
 	cv::Point loc;
 	cv::Rect bbox;
 	EntityType type;
-	int detThresh;
-	void setDetThresh();
 	void setBoundingBox();
 
 public:
 	Entity(cv::Point loc, EntityType type);
+	static int getDetThresh(EntityType type);
+	static cv::Mat spriteTable[EntityType::SIZE_ENTITY_TYPE]; // Global for now
+	static void fillSpriteTable(WorldType world);
 
 	cv::Point getLoc();
 	cv::Rect getBBox();
 	cv::Mat getSprite();
-	int getDetThresh();
 	EntityType getType();
 
 	void setLoc(cv::Point loc);
