@@ -24,6 +24,7 @@ int main(int argc, char** argv) {
 	int marioState = 0;
 
 	std::vector<cv::Mat> marioTemplates = loadMarioTemplates();
+	int marioThresholds[] = {150000, 150000, 150000, 150000, 150000, 150000};
 	std::vector<cv::Mat> spriteList = getSpriteList(WorldType::OVERWORLD);
 
 	// cv::namedWindow("Input", cv::WINDOW_AUTOSIZE);
@@ -57,7 +58,7 @@ int main(int argc, char** argv) {
 
 		while (foundMario != true) {
 			marioAttempts.push_back(marioState);
-			marioBoundingRect = findMarioInFrame(input, marioTemplates[marioState], cv::Rect(0, 0, 0, 0), cv::Scalar(0, 255, 255), CV_TM_SQDIFF, 150000);
+			marioBoundingRect = findMarioInFrame(input, marioTemplates[marioState], cv::Rect(0, 0, 0, 0), cv::Scalar(0, 255, 255), CV_TM_SQDIFF, marioThresholds[marioState]);
 			if (marioBoundingRect.area() == 0) {
 
 				if (marioAttempts.size() > 5) {
@@ -81,7 +82,6 @@ int main(int argc, char** argv) {
 					// We couldn't find big mario to the right, look for big mario to the left
 					marioState = 3;
 				} else if (marioState == 2 && std::find(marioAttempts.begin(), marioAttempts.end(), 3) != marioAttempts.end()) {
-
 					// We couldn't find big mario to the right or left
 					if (std::find(marioAttempts.begin(), marioAttempts.end(), 0) != marioAttempts.end()) {
 						marioState = 4;
@@ -89,6 +89,7 @@ int main(int argc, char** argv) {
 					else {
 						marioState = 0;
 					}
+
 				} else if (marioState == 3 && std::find(marioAttempts.begin(), marioAttempts.end(), 2) == marioAttempts.end()) {
 					// We couldn't find big mario to the left, look for big mario to the right
 					marioState = 2;
@@ -100,6 +101,7 @@ int main(int argc, char** argv) {
 					else {
 						marioState = 1;
 					}
+
 				} else if (marioState == 4 && std::find(marioAttempts.begin(), marioAttempts.end(), 5) == marioAttempts.end()) {
 					// We couldn't find fire mario to the right, look for fire mario to the left
 					marioState = 3;
@@ -119,6 +121,8 @@ int main(int argc, char** argv) {
 				foundMario = true;
 			}
 		}
+
+		std::cout << std::endl;
 
 		for (int i = 0; i < enemyBoundingBoxes.size(); i++) {
 			cv::rectangle(recon, enemyBoundingBoxes[i], cv::Scalar(127,127,127));
@@ -141,7 +145,7 @@ std::vector<cv::Mat> loadMarioTemplates() {
 	list.push_back(cv::imread("sprites/mario/big-mario-normal-template.png"));
 	list.push_back(cv::imread("sprites/mario/big-mario-normal-template-left.png"));
 	list.push_back(cv::imread("sprites/mario/fire-mario-normal-template.png"));
-	list.push_back(cv::imread("sprites/mario/fire-mario-normal-template-left.png"));
+	list.push_back(cv::imread("sprites/mario/fire-mario-normal-template-cropped-left.png"));
 	return list;
 }
 
@@ -166,7 +170,7 @@ cv::Rect findMarioInFrame(cv::Mat image, cv::Mat marioTemplate, cv::Rect marioBo
 
 	// Try and find the first enemy template
 	cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
-	std::cout << minVal << std::endl;
+	std::cout << minVal << ", ";
 
 	// TODO - allow for max match technique
 	if (minVal < threshold) {
