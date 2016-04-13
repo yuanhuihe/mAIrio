@@ -9,6 +9,7 @@
 std::vector<cv::Mat> getSpriteList(WorldType world);
 cv::Mat getHue(std::string loc);
 void findEnemyTemplateInFrame(cv::Mat image, cv::Mat enemyTemplate, std::vector<cv::Rect> boundingBoxes, cv::Scalar drawColor, int match_method, double threshold);
+bool findMarioInFrame();
 
 int main(int argc, char** argv) {
 	cv::VideoCapture cap;
@@ -53,10 +54,10 @@ int main(int argc, char** argv) {
 		}
 
 		if (marioSmallInFrame) {
-			
+			marioSmallInFrame = findMarioInFrame();
 		}
 		else if (marioBigInFrame) {
-
+			marioSmallInFrame = findMarioInFrame();
 		}
 
 		for (int i = 0; i < enemyBoundingBoxes.size(); i++) {
@@ -84,6 +85,10 @@ int main(int argc, char** argv) {
 	}
 
 	return 0;
+}
+
+bool findMarioInFrame() {
+	return true;
 }
 
 cv::Mat getHue(std::string loc) {
