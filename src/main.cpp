@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 		}
 
 		std::vector<cv::Rect> enemyBoundingBoxes;
-		for (int i = 0; i < EntityType::PIRANHA; i++) {
+		for (int i = 1; i < EntityType::PIRANHA; i++) {
 			// 780000
 			findEnemyTemplateInFrame(input, Entity::spriteTable[i], enemyBoundingBoxes, cv::Scalar(0, 255, i*10), CV_TM_SQDIFF, Entity::getDetThresh((EntityType) i));
 		}
