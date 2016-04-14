@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <tlhelp32.h>
+#include <time.h>
 
 #include "Entity.h"
 #include "Mario.h"
@@ -41,6 +42,8 @@ int main(int argc, char** argv) {
 	cv::Rect marioBoundingRect;
 	bool foundMario = false;
 	int marioState = 0;
+	DWORD start, end;
+	int fps;
 
 	std::vector<cv::Mat> marioTemplates = loadMarioTemplates();
 	int marioThresholds[] = {150000, 150000, 150000, 150000, 150000, 150000};
@@ -74,6 +77,7 @@ int main(int argc, char** argv) {
 	}
 
 	while (1) {
+		start = GetTickCount();
 		foundMario = false;
 		/*if (newWorldType) {
 			// Determine type of world
@@ -172,6 +176,16 @@ int main(int argc, char** argv) {
 		}
 
 		// cv::cvtColor(input, input, CV_8UC4);
+		end = GetTickCount();
+		if (end != start) {
+			fps = 1000 / (end - start);
+		}
+
+		// Put fps on the screen. Maybe make it a toggle option
+		std::ostringstream strs;
+		strs << fps;
+		std::string str = strs.str();
+		cv::putText(input, str, cv::Point(15,30), FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0,255,255), 2);
 
 		cv::imshow("Image", input);
 
