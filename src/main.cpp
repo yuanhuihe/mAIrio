@@ -17,6 +17,8 @@ cv::Mat getHue(std::string loc);
 void findEnemyTemplateInFrame(cv::Mat image, cv::Mat enemyTemplate, std::vector<cv::Rect> boundingBoxes, cv::Scalar drawColor, int match_method, double threshold);
 cv::Rect findMarioInFrame(cv::Mat image, cv::Mat enemyTemplate, cv::Rect marioBoundingBox, int match_method, double threshold);
 std::vector<cv::Mat> loadMarioTemplates();
+
+// Global Window handle
 HWND emulator_window;
 
 BOOL CALLBACK EnumWindowsProcMy(HWND hwnd, LPARAM lParam)
@@ -45,8 +47,7 @@ int main(int argc, char** argv) {
 	// std::vector<cv::Mat> spriteList; // = getSpriteList(WorldType::OVERWORLD);
 	Entity::fillSpriteTable(WorldType::OVERWORLD);
 
-	// cv::namedWindow("Input", cv::WINDOW_AUTOSIZE);
-	// cv::namedWindow("Recon", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);
 
 	/* cap.open(argv[1]);
 
@@ -87,11 +88,7 @@ int main(int argc, char** argv) {
 		}
 
 		// Remove alpha component for template matching - I think this is why it works?
-		cv::cvtColor(input, recon, CV_8UC3);
-
-		// cv::imshow("Raw", raw);
-		// cv::waitKey(1);
-		// continue;
+		cv::cvtColor(input, input, CV_RGBA2RGB);
 
 		std::vector<cv::Rect> enemyBoundingBoxes;
 		/* for (int i = 1; i < EntityType::PIRANHA; i++) {
@@ -103,7 +100,7 @@ int main(int argc, char** argv) {
 
 		while (foundMario != true) {
 			marioAttempts.push_back(marioState);
-			marioBoundingRect = findMarioInFrame(recon, marioTemplates[marioState], cv::Rect(0, 0, 0, 0), CV_TM_SQDIFF, marioThresholds[marioState]);
+			marioBoundingRect = findMarioInFrame(input, marioTemplates[marioState], cv::Rect(0, 0, 0, 0), CV_TM_SQDIFF, marioThresholds[marioState]);
 			if (marioBoundingRect.area() == 0) {
 
 				if (marioAttempts.size() > 5) {
@@ -194,9 +191,6 @@ std::vector<cv::Mat> loadMarioTemplates() {
 	list.push_back(cv::imread("sprites/mario/big-mario-normal-template-left.png"));
 	list.push_back(cv::imread("sprites/mario/fire-mario-normal-template.png"));
 	list.push_back(cv::imread("sprites/mario/fire-mario-left.png"));
-	for (int i = 0; i < list.size(); i++) {
-		cv::cvtColor(list[i], list[i], CV_8UC3);
-	}
 	return list;
 }
 
