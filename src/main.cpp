@@ -4,15 +4,32 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <stdio.h>
+#include <windows.h>
+#include <tlhelp32.h>
 
 #include "Entity.h"
 #include "Mario.h"
+#include "ScreenCapture.h"
 
 std::vector<cv::Mat> getSpriteList(WorldType world);
 cv::Mat getHue(std::string loc);
 void findEnemyTemplateInFrame(cv::Mat image, cv::Mat enemyTemplate, std::vector<cv::Rect> boundingBoxes, cv::Scalar drawColor, int match_method, double threshold);
-cv::Rect findMarioInFrame(cv::Mat image, cv::Mat enemyTemplate, cv::Rect marioBoundingBox, cv::Scalar drawColor, int match_method, double threshold);
+cv::Rect findMarioInFrame(cv::Mat image, cv::Mat enemyTemplate, cv::Rect marioBoundingBox, int match_method, double threshold);
 std::vector<cv::Mat> loadMarioTemplates();
+HWND emulator_window;
+
+BOOL CALLBACK EnumWindowsProcMy(HWND hwnd, LPARAM lParam)
+{
+	DWORD lpdwProcessId;
+	GetWindowThreadProcessId(hwnd, &lpdwProcessId);
+	if (lpdwProcessId == lParam)
+	{
+		emulator_window = hwnd;
+		return FALSE;
+	}
+	return TRUE;
+}
 
 int main(int argc, char** argv) {
 	cv::VideoCapture cap;
@@ -29,12 +46,30 @@ int main(int argc, char** argv) {
 	Entity::fillSpriteTable(WorldType::OVERWORLD);
 
 	// cv::namedWindow("Input", cv::WINDOW_AUTOSIZE);
-	cv::namedWindow("Recon", cv::WINDOW_AUTOSIZE);
+	// cv::namedWindow("Recon", cv::WINDOW_AUTOSIZE);
 
-	cap.open(argv[1]);
+	/* cap.open(argv[1]);
+
 	if (!cap.isOpened()) {
 		std::cout << "Cannot open " << argv[1] << std::endl;
 		return -1;
+	} */
+
+	PROCESSENTRY32 entry;
+	entry.dwSize = sizeof(PROCESSENTRY32);
+	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+	if (Process32First(snapshot, &entry) == TRUE)
+	{
+		while (Process32Next(snapshot, &entry) == TRUE)
+		{
+			if (stricmp(entry.szExeFile, "fceux.exe") == 0)
+			{
+				HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
+				DWORD id = GetProcessId(hProcess);
+				EnumWindows((WNDENUMPROC)EnumWindowsProcMy, id);
+				CloseHandle(hProcess);
+			}
+		}
 	}
 
 	while (1) {
@@ -44,23 +79,31 @@ int main(int argc, char** argv) {
 			spriteList = getSpriteList(world);
 		}*/
 
-		cap >> input;
+		// cap >> input;
+		input = hwnd2mat(emulator_window);
 		if (input.empty()) {
+			std::cout << "Empty input" << std::endl;
 			break;
 		}
 
+		// Remove alpha component for template matching - I think this is why it works?
+		cv::cvtColor(input, recon, CV_8UC3);
+
+		// cv::imshow("Raw", raw);
+		// cv::waitKey(1);
+		// continue;
+
 		std::vector<cv::Rect> enemyBoundingBoxes;
-		for (int i = 1; i < EntityType::PIRANHA; i++) {
+		/* for (int i = 1; i < EntityType::PIRANHA; i++) {
 			// 780000
 			findEnemyTemplateInFrame(input, Entity::spriteTable[i], enemyBoundingBoxes, cv::Scalar(0, 255, i*10), CV_TM_SQDIFF, Entity::getDetThresh((EntityType) i));
-		}
+		} */
 
-		/*
 		std::vector<int> marioAttempts;
 
 		while (foundMario != true) {
 			marioAttempts.push_back(marioState);
-			marioBoundingRect = findMarioInFrame(input, marioTemplates[marioState], cv::Rect(0, 0, 0, 0), cv::Scalar(0, 255, 255), CV_TM_SQDIFF, marioThresholds[marioState]);
+			marioBoundingRect = findMarioInFrame(recon, marioTemplates[marioState], cv::Rect(0, 0, 0, 0), CV_TM_SQDIFF, marioThresholds[marioState]);
 			if (marioBoundingRect.area() == 0) {
 
 				if (marioAttempts.size() > 5) {
@@ -120,15 +163,18 @@ int main(int argc, char** argv) {
 
 			}
 			else {
+				cv::rectangle(input, marioBoundingRect, cv::Scalar(255,255,0), 2, 8, 0);
 				foundMario = true;
 			}
 		}
-		*/ 
+
 		std::cout << std::endl;
 
 		for (int i = 0; i < enemyBoundingBoxes.size(); i++) {
 			cv::rectangle(recon, enemyBoundingBoxes[i], cv::Scalar(127,127,127));
 		}
+
+		// cv::cvtColor(input, input, CV_8UC4);
 
 		cv::imshow("Image", input);
 
@@ -147,11 +193,14 @@ std::vector<cv::Mat> loadMarioTemplates() {
 	list.push_back(cv::imread("sprites/mario/big-mario-normal-template.png"));
 	list.push_back(cv::imread("sprites/mario/big-mario-normal-template-left.png"));
 	list.push_back(cv::imread("sprites/mario/fire-mario-normal-template.png"));
-	list.push_back(cv::imread("sprites/mario/fire-mario-normal-template-cropped-left.png"));
+	list.push_back(cv::imread("sprites/mario/fire-mario-left.png"));
+	for (int i = 0; i < list.size(); i++) {
+		cv::cvtColor(list[i], list[i], CV_8UC3);
+	}
 	return list;
 }
 
-cv::Rect findMarioInFrame(cv::Mat image, cv::Mat marioTemplate, cv::Rect marioBoundingBox, cv::Scalar drawColor, int match_method, double threshold) {
+cv::Rect findMarioInFrame(cv::Mat image, cv::Mat marioTemplate, cv::Rect marioBoundingBox, int match_method, double threshold) {
 
 	cv::Mat result;
 	cv::Point minLoc;
@@ -166,6 +215,7 @@ cv::Rect findMarioInFrame(cv::Mat image, cv::Mat marioTemplate, cv::Rect marioBo
 	int result_rows = image.rows - marioTemplate.rows + 1;
 
 	result.create(result_rows, result_cols, CV_32FC1);
+	// cv::imshow("Template", marioTemplate);
 
 	/// Do the Matching and Normalize
 	cv::matchTemplate(image, marioTemplate, result, match_method);
@@ -188,10 +238,11 @@ cv::Rect findMarioInFrame(cv::Mat image, cv::Mat marioTemplate, cv::Rect marioBo
 		// Populate our enemy bounding boxes
 		// TODO - Extrapolate enemy size
 
-		// Draw what we see
-		cv::rectangle(image, matchLoc, cv::Point(matchLoc.x + marioTemplate.cols, matchLoc.y + marioTemplate.rows), drawColor, 2, 8, 0);
-
+		// Return rectangle
 		return cv::Rect(matchLoc, cv::Point(matchLoc.x + marioTemplate.cols, matchLoc.y + marioTemplate.rows));
+	}
+	else {
+		return cv::Rect(0,0,0,0);
 	}
 }
 
