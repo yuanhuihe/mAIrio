@@ -44,6 +44,7 @@ public:
 	static int getDetThresh(EntityType type);
 	static cv::Mat spriteTable[EntityType::SIZE_ENTITY_TYPE];
 	static void fillSpriteTable(WorldType world);
+	static std::vector<Entity> watch(cv::Mat image, std::vector<Entity> known);
 
 	cv::Point getLoc();
 	cv::Rect getBBox();

@@ -141,6 +141,8 @@ bool Entity::isHostile() { // Technically should also return true for a moving s
 }
 
 bool Entity::updateState(cv::Mat image) {
+	///TODO Create an ROI around the Entity so that we don't need to scan the entire image
+
 	cv::Mat result;
 	cv::Point minLoc;
 	cv::Point maxLoc;
@@ -153,17 +155,17 @@ bool Entity::updateState(cv::Mat image) {
 
 	while (true) {
 		// Create the result matrix
-		int result_cols = image.cols - spriteTable[type].cols + 1;
-		int result_rows = image.rows - spriteTable[type].rows + 1;
+		int result_cols = image.cols - spriteTable[tmpType].cols + 1;
+		int result_rows = image.rows - spriteTable[tmpType].rows + 1;
 		result.create(result_rows, result_cols, CV_32FC1);
 
 		// Do the Matching and Normalize
-		cv::matchTemplate(image, spriteTable[type], result, method);
+		cv::matchTemplate(image, spriteTable[tmpType], result, method);
 
 		// Try and find the first enemy template
 		cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
 
-		if (minVal < getDetThresh(type)) { // We found it
+		if (minVal < getDetThresh(tmpType)) { // We found it
 			loc = minLoc;
 			type = tmpType;
 
@@ -188,6 +190,55 @@ bool Entity::updateState(cv::Mat image) {
 			return false; // We lost the Entity
 		}
 	}
+}
+
+std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known) {
+	std::vector<Entity> ret;
+	
+	// Only look at the right
+	int origWidth = image.size().width;
+	image = image(cv::Rect(image.size().width - 40, 0, 40, image.size().height));
+	
+	cv::Mat result;
+	cv::Point minLoc;
+	cv::Point maxLoc;
+	cv::Point matchLoc;
+
+	double minVal;
+	double maxVal;
+	int method = cv::TM_SQDIFF;
+
+	for (EntityType t = EntityType::GOOMBA; t != EntityType::SIZE_ENTITY_TYPE; t = static_cast<EntityType>(t + 1)) {
+		// Create the result matrix
+		int result_cols = image.cols - spriteTable[t].cols + 1;
+		int result_rows = image.rows - spriteTable[t].rows + 1;
+		result.create(result_rows, result_cols, CV_32FC1);
+
+		// Do the Matching and Normalize
+		cv::matchTemplate(image, spriteTable[t], result, method);
+
+		// White out the Entities we know about of this type
+		for (int i = 0; i < known.size(); i++) {
+			if (known[i].getType() == t) {
+				cv::Rect bbox = known[i].getBBox();
+				for (int m = std::max(0, bbox.y); m < std::min(result.size().height, bbox.y + bbox.height); m++) {
+					for (int n = std::max(0, bbox.x); m < std::min(result.size().width, bbox.x + bbox.width); n++) {
+						result.at<float>(cv::Point(n, m)) = std::numeric_limits<float>::max();
+					}
+				}
+			}
+		}
+
+		// Try and find the first enemy template
+		cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
+
+		if (minVal < getDetThresh(t)) { // We found one
+			minLoc.x += origWidth;
+			ret.push_back(Entity(minLoc, t));
+		}
+	}
+
+	return ret;
 }
 
 cv::Mat Entity::spriteTable[EntityType::SIZE_ENTITY_TYPE];
