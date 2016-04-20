@@ -154,13 +154,13 @@ bool Entity::updateState(cv::Mat image, int timeMS) {
 	int method = cv::TM_SQDIFF;
 	EntityType tmpType = type;
 
-	const int MARGIN = 10;
+	const int MARGIN = 5;
 	int x = std::max(0, bbox.x + loc.x - MARGIN);
 	int y = std::max(0, bbox.y + loc.y - MARGIN);
 	int width = std::min(bbox.width + MARGIN * 2, image.cols - x);
 	int height = std::min(bbox.height + MARGIN * 2, image.rows - y);
 	cv::Mat roi = image(cv::Rect(x, y, width, height));
-	imshow("ROI", roi);
+	// imshow("ROI", roi);
 
 	while (true) {
 		// Create the result matrix
