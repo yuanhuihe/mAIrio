@@ -29,7 +29,7 @@ void Entity::setBoundingBox() {
 int Entity::getDetThresh(EntityType type) {
 	int detThresh = 0;
 	switch (type) {
-	case EntityType::GOOMBA: detThresh = 150000; break;
+	case EntityType::GOOMBA: detThresh = 780000; break;
 	case EntityType::KOOPA_L: detThresh = 150000; break;
 	case EntityType::KOOPA_R: detThresh = 150000; break;
 	//case EntityType::KOOPA_RED_L: detThresh = 150000; break;
@@ -96,7 +96,7 @@ cv::Point Entity::getLoc() {
 }
 
 cv::Rect Entity::getBBox() {
-	return bbox;
+	return cv::Rect(loc.x + bbox.x, loc.y + bbox.y, bbox.width, bbox.height);
 }
 
 cv::Mat Entity::getSprite() {

@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
 	cv::Mat input;
 	cv::Mat inputCh[3];
 	cv::Mat recon;
+	cv::Mat output;
 	cv::Rect marioBoundingRect;
 	bool foundMario = false;
 	int marioState = 0;
@@ -64,7 +65,7 @@ int main(int argc, char** argv) {
 	{
 		while (Process32Next(snapshot, &entry) == TRUE)
 		{
-			if (stricmp(entry.szExeFile, "fceux.exe") == 0)
+			if (strcmp(entry.szExeFile, "fceux.exe") == 0)
 			{
 				HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, entry.th32ProcessID);
 				DWORD id = GetProcessId(hProcess);
@@ -73,6 +74,8 @@ int main(int argc, char** argv) {
 			}
 		}
 	}
+
+	Entity goomba(cv::Point(0,0), EntityType::GOOMBA);
 
 	while (1) {
 		start = GetTickCount();
@@ -86,35 +89,50 @@ int main(int argc, char** argv) {
 		input = hwnd2mat(emulator_window);
 		if (input.empty()) {
 			std::cout << "Empty input" << std::endl;
-			break;
+			continue;
 		}
 
 		// Remove alpha component for template matching - I think this is why it works?
 		cv::cvtColor(input, input, CV_RGBA2RGB);
 
-		std::vector<cv::Rect> enemyBoundingBoxes;
-		/* for (int i = 1; i < EntityType::PIRANHA; i++) {
-			// 780000
-			findEnemyTemplateInFrame(input, Entity::spriteTable[i], enemyBoundingBoxes, cv::Scalar(0, 255, i*10), CV_TM_SQDIFF, Entity::getDetThresh((EntityType) i));
-		} */
+		if (goomba.updateState(input)) {
+			cv::rectangle(input, goomba.getBBox(), cv::Scalar::all(255), 2);
+		}
 
+		// 780000
 		std::cout << std::endl;
 
-		for (int i = 0; i < enemyBoundingBoxes.size(); i++) {
-			cv::rectangle(recon, enemyBoundingBoxes[i], cv::Scalar(127,127,127));
+		/* cv::Mat holeROI = input.clone()(cv::Rect(0, 205, input.cols, 1));
+		cv::cvtColor(holeROI, holeROI, CV_RGB2HSV);
+		cv::inRange(holeROI, cv::Scalar(92, 148, 250), cv::Scalar(92, 148, 255), output);
+		cv::imshow("holeROI", holeROI); */
+
+		int startX = -1;
+		int endX = -1;
+		for (int i = 0; i < input.cols; i++) {
+			Vec3b v = input.at<Vec3b>(205, i);
+			if (v[0] == 252 && v[1] == 148 && v[2] == 92) {
+				if (startX > -1) {
+					endX = i;
+				}
+				else {
+					startX = i;
+				}
+			}
 		}
+
+		cv::rectangle(input, cv::Rect(startX, 205, endX - startX, 5), cv::Scalar(255, 0, 0), 2);
 
 		// cv::cvtColor(input, input, CV_8UC4);
 		end = GetTickCount();
 		if (end != start) {
 			fps = 1000 / (end - start);
 		}
-
 		// Put fps on the screen. Maybe make it a toggle option
 		std::ostringstream strs;
 		strs << fps;
 		std::string str = strs.str();
-		cv::putText(input, str, cv::Point(15,30), FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0,255,255), 2);
+		cv::putText(input, str, cv::Point(15, 30), FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 255, 255), 2);
 
 		cv::imshow("Image", input);
 
