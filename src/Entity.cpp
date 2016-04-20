@@ -1,6 +1,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <iostream>
 
 #include "Entity.h"
 
@@ -77,9 +78,10 @@ void Entity::fillSpriteTable(WorldType world) {
 	spriteTable[EntityType::FIREFLOWER]*/
 }
 
-Entity::Entity(cv::Point loc, EntityType type) {
+Entity::Entity(cv::Point loc, EntityType type, int timeMS) {
 	this->loc = loc;
 	this->type = type;
+	msLastSeen = timeMS;
 
 	setBoundingBox();
 }
@@ -87,6 +89,7 @@ Entity::Entity(cv::Point loc, EntityType type) {
 Entity::Entity() {
 	this->loc = cv::Point(0,0);
 	this->type = SIZE_ENTITY_TYPE;
+	isInFrame = true;
 
 	setBoundingBox();
 }
@@ -140,9 +143,7 @@ bool Entity::isHostile() { // Technically should also return true for a moving s
 	}
 }
 
-bool Entity::updateState(cv::Mat image) {
-	///TODO Create an ROI around the Entity so that we don't need to scan the entire image
-
+bool Entity::updateState(cv::Mat image, int timeMS) {
 	cv::Mat result;
 	cv::Point minLoc;
 	cv::Point maxLoc;
@@ -153,23 +154,33 @@ bool Entity::updateState(cv::Mat image) {
 	int method = cv::TM_SQDIFF;
 	EntityType tmpType = type;
 
+	const int MARGIN = 10;
+	int x = std::max(0, bbox.x + loc.x - MARGIN);
+	int y = std::max(0, bbox.y + loc.y - MARGIN);
+	int width = std::min(bbox.width + MARGIN * 2, image.cols - x);
+	int height = std::min(bbox.height + MARGIN * 2, image.rows - y);
+	cv::Mat roi = image(cv::Rect(x, y, width, height));
+	imshow("ROI", roi);
+
 	while (true) {
 		// Create the result matrix
-		int result_cols = image.cols - spriteTable[tmpType].cols + 1;
-		int result_rows = image.rows - spriteTable[tmpType].rows + 1;
+		int result_cols = roi.cols - spriteTable[tmpType].cols + 1;
+		int result_rows = roi.rows - spriteTable[tmpType].rows + 1;
 		result.create(result_rows, result_cols, CV_32FC1);
 
 		// Do the Matching and Normalize
-		cv::matchTemplate(image, spriteTable[tmpType], result, method);
+		cv::matchTemplate(roi, spriteTable[tmpType], result, method);
 
 		// Try and find the first enemy template
 		cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
 
 		if (minVal < getDetThresh(tmpType)) { // We found it
-			loc = minLoc;
+			loc = cv::Point(minLoc.x + loc.x + bbox.x - MARGIN, minLoc.y + loc.y + bbox.y - MARGIN);
 			type = tmpType;
 
 			setBoundingBox();
+			isInFrame = true;
+			msLastSeen = timeMS;
 
 			return true;
 		}
@@ -187,12 +198,17 @@ bool Entity::updateState(cv::Mat image) {
 			}
 		}
 		if (t == EntityType::SIZE_ENTITY_TYPE) {
+			isInFrame = false;
 			return false; // We lost the Entity
 		}
 	}
 }
 
-std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known) {
+bool Entity::inFrame() {
+	return isInFrame;
+}
+
+std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int timeMS) {
 	std::vector<Entity> ret;
 	
 	// Only look at the right
@@ -214,31 +230,48 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known) {
 		int result_rows = image.rows - spriteTable[t].rows + 1;
 		result.create(result_rows, result_cols, CV_32FC1);
 
-		// Do the Matching and Normalize
-		cv::matchTemplate(image, spriteTable[t], result, method);
-
-		// White out the Entities we know about of this type
+		cv::Mat maskedImage = image.clone();
 		for (int i = 0; i < known.size(); i++) {
 			if (known[i].getType() == t) {
 				cv::Rect bbox = known[i].getBBox();
+				bbox.x -= (origWidth - maskedImage.cols);
+				std::cout << bbox.x << std::endl;
+				cv::rectangle(maskedImage, bbox, cv::Scalar::all(255), CV_FILLED);
+			}
+		}
+
+		cv::imshow("Masked Watch", maskedImage);
+
+		// Do the Matching and Normalize
+		cv::matchTemplate(maskedImage, spriteTable[t], result, method);
+
+		// White out the Entities we know about of this type
+		/* for (int i = 0; i < known.size(); i++) {
+			if (known[i].getType() == t) {
 				for (int m = std::max(0, bbox.y); m < std::min(result.size().height, bbox.y + bbox.height); m++) {
 					for (int n = std::max(0, bbox.x); m < std::min(result.size().width, bbox.x + bbox.width); n++) {
 						result.at<float>(cv::Point(n, m)) = std::numeric_limits<float>::max();
 					}
 				}
 			}
-		}
+		} */
 
 		// Try and find the first enemy template
 		cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
+		// minLoc = cv::Point(minLoc.x + spriteTable[t].cols - 1, minLoc.y + spriteTable[t].rows - 1);
 
 		if (minVal < getDetThresh(t)) { // We found one
-			minLoc.x += origWidth;
-			ret.push_back(Entity(minLoc, t));
+			minLoc.x += (origWidth - maskedImage.cols);
+			ret.push_back(Entity(minLoc, t, timeMS));
 		}
 	}
 
 	return ret;
+}
+
+
+int Entity::timeLastSeen() {
+	return msLastSeen;
 }
 
 cv::Mat Entity::spriteTable[EntityType::SIZE_ENTITY_TYPE];

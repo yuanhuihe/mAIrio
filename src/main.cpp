@@ -44,6 +44,7 @@ int main(int argc, char** argv) {
 	DWORD start, end;
 	int fps;
 	std::vector<Entity> known;
+	const int PURGE_TIME = 1000;
 
 	// std::vector<cv::Mat> marioTemplates = loadMarioTemplates();
 	int marioThresholds[] = {150000, 150000, 150000, 150000, 150000, 150000};
@@ -76,8 +77,6 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	Entity goomba(cv::Point(0,0), EntityType::GOOMBA);
-
 	while (1) {
 		start = GetTickCount();
 		foundMario = false;
@@ -97,10 +96,10 @@ int main(int argc, char** argv) {
 		cv::cvtColor(input, input, CV_RGBA2RGB);
 
 		for (int i = 0; i < known.size(); i++) {
-			known[i].updateState(input);
+			known[i].updateState(input, start);
 		}
 
-		std::vector<Entity> newEntities = Entity::watch(input, known);
+		std::vector<Entity> newEntities = Entity::watch(input, known, start);
 
 		// Add newEntities to known
 		for (int i = 0; i < newEntities.size(); i++) {
@@ -108,7 +107,12 @@ int main(int argc, char** argv) {
 		}
 
 		for (int i = 0; i < known.size(); i++) {
-			cv::rectangle(input, known[i].getBBox(), cv::Scalar::all(255), 2);
+			if (known[i].inFrame()) {
+				cv::rectangle(input, known[i].getBBox(), cv::Scalar::all(255), 2);
+			}
+			else if (start - known[i].timeLastSeen() > PURGE_TIME) {
+				known.erase(known.begin() + i);
+			}
 		}
 
 		// 780000
@@ -148,6 +152,7 @@ int main(int argc, char** argv) {
 		if (end != start) {
 			fps = 1000 / (end - start);
 		}
+
 		// Put fps on the screen. Maybe make it a toggle option
 		std::ostringstream strs;
 		strs << fps;
