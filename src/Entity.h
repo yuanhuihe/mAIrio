@@ -39,6 +39,7 @@ protected:
 
 public:
 	Entity(cv::Point loc, EntityType type);
+	Entity::Entity();
 	static int getDetThresh(EntityType type);
 	static cv::Mat spriteTable[EntityType::SIZE_ENTITY_TYPE]; // Global for now
 	static void fillSpriteTable(WorldType world);

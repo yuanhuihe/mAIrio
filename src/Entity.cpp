@@ -85,6 +85,13 @@ Entity::Entity(cv::Point loc, EntityType type) {
 	setBoundingBox();
 }
 
+Entity::Entity() {
+	this->loc = cv::Point(0,0);
+	this->type = SIZE_ENTITY_TYPE;
+
+	setBoundingBox();
+}
+
 cv::Point Entity::getLoc() {
 	return loc;
 }
