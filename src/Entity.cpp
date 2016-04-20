@@ -272,7 +272,6 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	return ret;
 }
 
-
 int Entity::timeLastSeen() {
 	return msLastSeen;
 }

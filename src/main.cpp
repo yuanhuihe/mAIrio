@@ -118,11 +118,6 @@ int main(int argc, char** argv) {
 		// 780000
 		std::cout << std::endl;
 
-		/* cv::Mat holeROI = input.clone()(cv::Rect(0, 205, input.cols, 1));
-		cv::cvtColor(holeROI, holeROI, CV_RGB2HSV);
-		cv::inRange(holeROI, cv::Scalar(92, 148, 250), cv::Scalar(92, 148, 255), output);
-		cv::imshow("holeROI", holeROI); */
-
 		int startX = -1;
 		int endX = -1;
 
