@@ -190,6 +190,9 @@ bool Entity::updateState(cv::Mat image, int timeMS) {
 			// Reset to first type if tmpType is what we thought the Entity was
 			tmpType = EntityType::GOOMBA;
 		}
+		else {
+			tmpType = static_cast<EntityType>(tmpType + 1);
+		}
 		EntityType t;
 		for (t = tmpType; t != EntityType::SIZE_ENTITY_TYPE; t = static_cast<EntityType>(t + 1)) {
 			if (transTable[type][t] && t != type) {
@@ -277,9 +280,9 @@ int Entity::timeLastSeen() {
 cv::Mat Entity::spriteTable[EntityType::SIZE_ENTITY_TYPE];
 
 const bool Entity::transTable[EntityType::SIZE_ENTITY_TYPE][EntityType::SIZE_ENTITY_TYPE] = {
-		        // GOOMBA, KOOPA_L, KOOPA_R, SHELL
+		       // GOOMBA, KOOPA_L, KOOPA_R, SHELL
 	/*GOOMBA*/  { true,   false,   false,   false },
 	/*KOOPA_L*/ { false,  true,    true,    true },
 	/*KOOPA_R*/ { false,  true,    true,    true },
-	/*SHELL*/   { false,  true,    true,    true },
+	/*SHELL*/   { false,  false,   false,    true },
 };
