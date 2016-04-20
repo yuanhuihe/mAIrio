@@ -43,6 +43,7 @@ int main(int argc, char** argv) {
 	int marioState = 0;
 	DWORD start, end;
 	int fps;
+	std::vector<Entity> known;
 
 	// std::vector<cv::Mat> marioTemplates = loadMarioTemplates();
 	int marioThresholds[] = {150000, 150000, 150000, 150000, 150000, 150000};
@@ -95,8 +96,19 @@ int main(int argc, char** argv) {
 		// Remove alpha component for template matching - I think this is why it works?
 		cv::cvtColor(input, input, CV_RGBA2RGB);
 
-		if (goomba.updateState(input)) {
-			cv::rectangle(input, goomba.getBBox(), cv::Scalar::all(255), 2);
+		for (int i = 0; i < known.size(); i++) {
+			known[i].updateState(input);
+		}
+
+		std::vector<Entity> newEntities = Entity::watch(input, known);
+
+		// Add newEntities to known
+		for (int i = 0; i < newEntities.size(); i++) {
+			known.push_back(newEntities[i]);
+		}
+
+		for (int i = 0; i < known.size(); i++) {
+			cv::rectangle(input, known[i].getBBox(), cv::Scalar::all(255), 2);
 		}
 
 		// 780000
@@ -109,19 +121,27 @@ int main(int argc, char** argv) {
 
 		int startX = -1;
 		int endX = -1;
+
 		for (int i = 0; i < input.cols; i++) {
-			Vec3b v = input.at<Vec3b>(205, i);
-			if (v[0] == 252 && v[1] == 148 && v[2] == 92) {
+			while (input.at<Vec3b>(205, i)[0] == 252 && input.at<Vec3b>(205, i)[1] == 148 && input.at<Vec3b>(205, i)[2] == 92) {
 				if (startX > -1) {
 					endX = i;
 				}
 				else {
 					startX = i;
 				}
+
+				if (++i >= input.cols) {
+					break;
+				}
+			}
+
+			if (startX > -1) {
+				cv::rectangle(input, cv::Rect(startX, 205, endX - startX, 5), cv::Scalar(255, 0, 0), 2);
+				startX = -1;
+				endX = -1;
 			}
 		}
-
-		cv::rectangle(input, cv::Rect(startX, 205, endX - startX, 5), cv::Scalar(255, 0, 0), 2);
 
 		// cv::cvtColor(input, input, CV_8UC4);
 		end = GetTickCount();
