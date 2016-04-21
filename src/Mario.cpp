@@ -20,6 +20,10 @@ void Mario::setBoundingBox() {
 	}
 }
 
+MarioType Mario::getType() {
+	return type;
+}
+
 int Mario::getDetThresh(MarioType type) {
 	int detThresh = 0;
 	switch (type) {
@@ -35,12 +39,12 @@ int Mario::getDetThresh(MarioType type) {
 
 void Mario::fillSpriteTable() {
 	// Fill spriteTable
-	Mario::spriteTable[MarioType::SMALL_L] = cv::imread("sprites/mario/small-mario-template-left.png", CV_LOAD_IMAGE_COLOR);
-	Mario::spriteTable[MarioType::SMALL_R] = cv::imread("sprites/mario/small-mario-template.png", CV_LOAD_IMAGE_COLOR);
-	Mario::spriteTable[MarioType::BIG_L] = cv::imread("sprites/mario/big-mario-normal-template-left.png", CV_LOAD_IMAGE_COLOR);
-	Mario::spriteTable[MarioType::BIG_R] = cv::imread("sprites/mario/big-mario-normal-template.png", CV_LOAD_IMAGE_COLOR);;
-	Mario::spriteTable[MarioType::FIRE_L] = cv::imread("sprites/mario/fire-mario-left.png", CV_LOAD_IMAGE_COLOR);
-	Mario::spriteTable[MarioType::FIRE_R] = cv::imread("sprites/mario/fire-mario-normal-template.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[MarioType::SMALL_L] = cv::imread("sprites/mario/small-mario-template-left.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[MarioType::SMALL_R] = cv::imread("sprites/mario/small-mario-template.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[MarioType::BIG_L] = cv::imread("sprites/mario/big-mario-normal-template-left.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[MarioType::BIG_R] = cv::imread("sprites/mario/big-mario-normal-template.png", CV_LOAD_IMAGE_COLOR);;
+	spriteTable[MarioType::FIRE_L] = cv::imread("sprites/mario/fire-mario-left.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[MarioType::FIRE_R] = cv::imread("sprites/mario/fire-mario-normal-template.png", CV_LOAD_IMAGE_COLOR);
 }
 
 Mario::Mario(cv::Point loc, MarioType type, int timeMS) {
@@ -55,7 +59,7 @@ Mario::Mario(cv::Point loc, MarioType type, int timeMS) {
 Mario::Mario() {
 	this->loc = cv::Point(0, 0);
 	this->type = MarioType::SIZE_MARIO_TYPE;
-	isInFrame = true;
+	isInFrame = false;
 
 	setBoundingBox();
 }
@@ -124,10 +128,10 @@ bool Mario::updateState(cv::Mat image, int timeMS) {
 	}
 }
 
-Mario Mario::watch(cv::Mat image, int timeMS) {
+void Mario::watch(cv::Mat image, int timeMS) {
 	// Only look at the right
 	int origWidth = image.size().width;
-	image = image(cv::Rect(0, 0, image.size().width - 40, image.size().height));
+	cv::Mat roi = image(cv::Rect(0, 0, image.size().width - 40, image.size().height));
 
 	cv::Mat result;
 	cv::Point minLoc;
@@ -140,22 +144,23 @@ Mario Mario::watch(cv::Mat image, int timeMS) {
 
 	for (MarioType t = MarioType::SMALL_R; t != MarioType::SIZE_MARIO_TYPE; t = static_cast<MarioType>(t + 1)) {
 		// Create the result matrix
-		int result_cols = image.cols - spriteTable[t].cols + 1;
-		int result_rows = image.rows - spriteTable[t].rows + 1;
+		int result_cols = roi.cols - spriteTable[t].cols + 1;
+		int result_rows = roi.rows - spriteTable[t].rows + 1;
 		result.create(result_rows, result_cols, CV_32FC1);
 
 		// Do the Matching and Normalize
-		cv::matchTemplate(image, spriteTable[t], result, method);
+		cv::matchTemplate(roi, spriteTable[t], result, method);
 
 		// Try and find the first enemy template
 		cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
 
 		if (minVal < getDetThresh(t)) { // We found mario
-			return Mario(minLoc, t, timeMS);
+			isInFrame = true;
+			msLastSeen = timeMS;
+			loc = minLoc;
+			return;
 		}
 	}
-
-	return Mario();
 }
 
 int Mario::timeLastSeen() {
