@@ -106,7 +106,9 @@ int main(int argc, char** argv) {
 			mario.updateState(input, start);
 		}
 
-		cv::rectangle(input, mario.getBBox(), cv::Scalar(127,127,0), 2);
+		if (mario.inFrame()) {
+			cv::rectangle(input, mario.getBBox(), cv::Scalar(0, 127, 255), 2);
+		}
 
 		for (int i = 0; i < known.size(); i++) {
 			known[i].updateState(input, start);

@@ -11,12 +11,12 @@
 // TODO - Update bounding box sizes
 void Mario::setBoundingBox() {
 	switch (type) {
-	case MarioType::SMALL_L: bbox = cv::Rect(-3, -5, 16, 16); break;
-	case MarioType::SMALL_R: bbox = cv::Rect(-5, -13, 16, 24); break;
-	case MarioType::BIG_L: bbox = cv::Rect(-2, -13, 16, 24); break;
-	case MarioType::BIG_R: bbox = cv::Rect(-3, -5, 16, 16); break;
-	case MarioType::FIRE_L: bbox = cv::Rect(-5, -13, 16, 24); break;
-	case MarioType::FIRE_R: bbox = cv::Rect(-2, -13, 16, 24); break;
+	case MarioType::SMALL_L: bbox = cv::Rect(-4, -3, 14, 17); break;
+	case MarioType::SMALL_R: bbox = cv::Rect(-4, -3, 14, 17); break;
+	case MarioType::BIG_L: bbox = cv::Rect(-5, -4, 17, 29); break;
+	case MarioType::BIG_R: bbox = cv::Rect(-5, -4, 17, 29); break;
+	case MarioType::FIRE_L: bbox = cv::Rect(-5, -4, 17, 29); break;
+	case MarioType::FIRE_R: bbox = cv::Rect(-5, -4, 17, 29); break;
 	}
 }
 
@@ -27,12 +27,12 @@ MarioType Mario::getType() {
 int Mario::getDetThresh(MarioType type) {
 	int detThresh = 0;
 	switch (type) {
-	case MarioType::SMALL_L: detThresh = 1500000; break;
-	case MarioType::SMALL_R: detThresh = 1500000; break;
-	case MarioType::BIG_L: detThresh = 1500000; break;
-	case MarioType::BIG_R: detThresh = 1500000; break;
-	case MarioType::FIRE_L: detThresh = 1500000; break;
-	case MarioType::FIRE_R: detThresh = 1500000; break;
+	case MarioType::SMALL_L: detThresh = 150000; break;
+	case MarioType::SMALL_R: detThresh = 150000; break;
+	case MarioType::BIG_L: detThresh = 150000; break;
+	case MarioType::BIG_R: detThresh = 150000; break;
+	case MarioType::FIRE_L: detThresh = 150000; break;
+	case MarioType::FIRE_R: detThresh = 150000; break;
 	}
 	return detThresh;
 }
@@ -45,6 +45,7 @@ void Mario::fillSpriteTable() {
 	spriteTable[MarioType::BIG_R] = cv::imread("sprites/mario/big-mario-normal-template.png", CV_LOAD_IMAGE_COLOR);;
 	spriteTable[MarioType::FIRE_L] = cv::imread("sprites/mario/fire-mario-left.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[MarioType::FIRE_R] = cv::imread("sprites/mario/fire-mario-normal-template.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[MarioType::DEAD] = cv::imread("sprites/mario/fire-mario-normal-template.png", CV_LOAD_IMAGE_COLOR);
 }
 
 Mario::Mario(cv::Point loc, MarioType type, int timeMS) {
@@ -75,7 +76,7 @@ bool Mario::updateState(cv::Mat image, int timeMS) {
 	int method = cv::TM_SQDIFF;
 	MarioType tmpType = type;
 
-	const int MARGIN = 5;
+	const int MARGIN = 10;
 	int x = std::max(0, bbox.x + loc.x - MARGIN);
 	int y = std::max(0, bbox.y + loc.y - MARGIN);
 	int width = std::min(bbox.width + MARGIN * 2, image.cols - x);
