@@ -27,12 +27,12 @@ MarioType Mario::getType() {
 int Mario::getDetThresh(MarioType type) {
 	int detThresh = 0;
 	switch (type) {
-	case MarioType::SMALL_L: detThresh = 150000; break;
-	case MarioType::SMALL_R: detThresh = 150000; break;
-	case MarioType::BIG_L: detThresh = 150000; break;
-	case MarioType::BIG_R: detThresh = 150000; break;
-	case MarioType::FIRE_L: detThresh = 150000; break;
-	case MarioType::FIRE_R: detThresh = 150000; break;
+	case MarioType::SMALL_L: detThresh = 1500000; break;
+	case MarioType::SMALL_R: detThresh = 1500000; break;
+	case MarioType::BIG_L: detThresh = 1500000; break;
+	case MarioType::BIG_R: detThresh = 1500000; break;
+	case MarioType::FIRE_L: detThresh = 1500000; break;
+	case MarioType::FIRE_R: detThresh = 1500000; break;
 	}
 	return detThresh;
 }
@@ -81,7 +81,7 @@ bool Mario::updateState(cv::Mat image, int timeMS) {
 	int width = std::min(bbox.width + MARGIN * 2, image.cols - x);
 	int height = std::min(bbox.height + MARGIN * 2, image.rows - y);
 	cv::Mat roi = image(cv::Rect(x, y, width, height));
-	// imshow("ROI", roi);
+	imshow("ROI", roi);
 
 	while (true) {
 		// Create the result matrix
@@ -98,11 +98,9 @@ bool Mario::updateState(cv::Mat image, int timeMS) {
 		if (minVal < getDetThresh(tmpType)) { // We found it
 			loc = cv::Point(minLoc.x + loc.x + bbox.x - MARGIN, minLoc.y + loc.y + bbox.y - MARGIN);
 			type = tmpType;
-
 			setBoundingBox();
 			isInFrame = true;
 			msLastSeen = timeMS;
-
 			return true;
 		}
 
@@ -126,6 +124,9 @@ bool Mario::updateState(cv::Mat image, int timeMS) {
 			return false; // We lost the Entity
 		}
 	}
+
+	isInFrame = false;
+	return false;
 }
 
 void Mario::watch(cv::Mat image, int timeMS) {
@@ -155,6 +156,7 @@ void Mario::watch(cv::Mat image, int timeMS) {
 		cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
 
 		if (minVal < getDetThresh(t)) { // We found mario
+			type = t;
 			isInFrame = true;
 			msLastSeen = timeMS;
 			loc = minLoc;
@@ -312,12 +314,12 @@ int Mario::timeLastSeen() {
 const bool spriteTable[MarioType::SIZE_MARIO_TYPE] = { };
 
 const bool transTable[MarioType::SIZE_MARIO_TYPE][MarioType::SIZE_MARIO_TYPE] = {
-		       // SMALL_L, SMALL_R, BIG_L, BIG_R, FIRE_L, FIRE_R, DEAD
-	/*SMALL_R*/{ true,    true,    false, true,  false,  false,  true },
-	/*SMALL_L*/ { true,    true,    true,  false, false,  false,  true },
-	/*BIG_R*/{ false,   true,    true,  true,  false,  true,   true },
-	/*BIG_L*/   { true,    false,   true,  true,  true,   false,  true },
-	/*FIRE_R*/{ false,   true,    false, true,  true,   true,   true },
-	/*FIRE_L*/  { false,   false,   true,  false, true,   true,   true },
-	/*DEAD*/    { false,   true,    false, false, false,  false,  true }
+		       // SMALL_R, SMALL_L, BIG_R, BIG_L, FIRE_R, FIRE_L, DEAD
+	/*SMALL_R*/{ true,   true,   true,   false,  false,  false,  true },
+	/*SMALL_L*/{ true,   true,   false,  true,   false,  false,  true },
+	/*BIG_R*/  { true,   false,  true,   true,   false,  true,   true },
+	/*BIG_L*/  { false,  true,   true,   true,   true,   false,  true },
+	/*FIRE_R*/ { true,   false,  true,   false,  true,   true,   true },
+	/*FIRE_L*/ { false,  true,   false,  true,   true,   true,   true },
+	/*DEAD*/   { true,  false,   false,  false,  false,  false,  true }
 };
