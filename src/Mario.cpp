@@ -304,7 +304,7 @@ int Mario::timeLastSeen() {
 }
 */
 
-const bool spriteTable[MarioType::SIZE_MARIO_TYPE];
+const bool spriteTable[MarioType::SIZE_MARIO_TYPE] = { };
 
 const bool transTable[MarioType::SIZE_MARIO_TYPE][MarioType::SIZE_MARIO_TYPE] = {
 		       // SMALL_L, SMALL_R, BIG_L, BIG_R, FIRE_L, FIRE_R, DEAD
