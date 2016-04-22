@@ -140,8 +140,6 @@ void Entity::setType(EntityType type) {
 
 bool Entity::isPassable() { // How to handle breakable bricks?
 	switch (type) {
-	//case EntityType::MARIO:
-	case EntityType::SHELL:
 	/*case EntityType::FLAGPOLE:
 	case EntityType::MUSHROOM:
 	case EntityType::FIREFLOWER:*/
@@ -156,7 +154,7 @@ bool Entity::isHostile() { // Technically should also return true for a moving s
 	case EntityType::GOOMBA:
 	case EntityType::KOOPA_R:
 	case EntityType::KOOPA_L:
-	//case EntityType::PIRANHA:
+	case EntityType::SHELL:
 		return true;
 	default:
 		return false;
@@ -284,8 +282,6 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 				cv::rectangle(maskedImage, bbox, cv::Scalar::all(255), CV_FILLED);
 			}
 		}
-
-		cv::imshow("Masked Watch", maskedImage);
 
 		// Do the Matching and Normalize
 		cv::matchTemplate(maskedImage, spriteTable[t], result, method);

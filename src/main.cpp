@@ -11,10 +11,11 @@
 
 #include "Entity.h"
 #include "ScreenCapture.h"
+#include "Keyboard.h"
+#include "Controller.h"
 
 std::vector<cv::Mat> getSpriteList(WorldType world);
 cv::Mat getHue(std::string loc);
-void findEnemyTemplateInFrame(cv::Mat image, cv::Mat enemyTemplate, std::vector<cv::Rect> boundingBoxes, cv::Scalar drawColor, int match_method, double threshold);
 
 // Global Window handle
 HWND emulator_window;
@@ -39,27 +40,15 @@ int main(int argc, char** argv) {
 	cv::Mat output;
 	cv::Rect marioBoundingRect;
 	Entity mario(EntityType::MARIO_SMALL_R);
-	bool foundMario = false;
-	int marioState = 0;
+	EntityType lostMarioAttempt = EntityType::MARIO_SMALL_L;
 	DWORD start, end;
 	int fps;
 	std::vector<Entity> known;
 	const int PURGE_TIME = 1000;
 
-	// std::vector<cv::Mat> marioTemplates = loadMarioTemplates();
-	int marioThresholds[] = {150000, 150000, 150000, 150000, 150000, 150000};
-	// std::vector<cv::Mat> spriteList; // = getSpriteList(WorldType::OVERWORLD);
 	Entity::fillSpriteTable(WorldType::OVERWORLD);
-	//mario.fillSpriteTable();
-
+	
 	cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);
-
-	/* cap.open(argv[1]);
-
-	if (!cap.isOpened()) {
-		std::cout << "Cannot open " << argv[1] << std::endl;
-		return -1;
-	} */
 
 	PROCESSENTRY32 entry;
 	entry.dwSize = sizeof(PROCESSENTRY32);
@@ -74,13 +63,15 @@ int main(int argc, char** argv) {
 				DWORD id = GetProcessId(hProcess);
 				EnumWindows((WNDENUMPROC)EnumWindowsProcMy, id);
 				CloseHandle(hProcess);
+				GetFocus();
 			}
 		}
 	}
-
-	foundMario = false;
+	Keyboard kb(emulator_window);
+	Controller control(kb);
 
 	while (1) {
+		control.runRight();
 		start = GetTickCount();
 
 		/*if (newWorldType) {
@@ -89,24 +80,40 @@ int main(int argc, char** argv) {
 		}*/
 
 		// cap >> input;
-		input = hwnd2mat(emulator_window);
-		if (input.empty()) {
-			std::cout << "Empty input" << std::endl;
-			continue;
+		if (emulator_window != NULL) {
+			input = hwnd2mat(emulator_window);
+			if (input.empty()) {
+				std::cout << "Lost FCEUX" << std::endl;
+				return -1;
+			}
+		}
+		else {
+			std::cout << "Lost FCEUX" << std::endl;
+			return -1;
 		}
 
-		// Remove alpha component for template matching - I think this is why it works?
+		// Get rid of alpha
 		cv::cvtColor(input, input, CV_RGBA2RGB);
 
+		// Find Mario
 		mario.updateState(input, start);
 		cv::rectangle(input, mario.getBBox(), cv::Scalar::all(255), 2);
-		
-		//cv::rectangle(input, mario.getBBox(), cv::Scalar(127,127,0), 2);
 
+		// If we've lost Mario, cycle through a new type each frame
+		if (start - mario.timeLastSeen() > 5000) {
+			mario.setType(lostMarioAttempt);
+			lostMarioAttempt = static_cast<EntityType>(lostMarioAttempt + 1);
+			if (lostMarioAttempt > EntityType::MARIO_FIRE_R) {
+				lostMarioAttempt = EntityType::MARIO_SMALL_L;
+			}
+		}
+
+		// Find known sprites
 		for (int i = 0; i < known.size(); i++) {
 			known[i].updateState(input, start);
 		}
 
+		// Detect new sprites
 		std::vector<Entity> newEntities = Entity::watch(input, known, start);
 
 		// Add newEntities to known
@@ -114,6 +121,7 @@ int main(int argc, char** argv) {
 			known.push_back(newEntities[i]);
 		}
 
+		// Draw all known sprites and delete old ones
 		for (int i = 0; i < known.size(); i++) {
 			if (known[i].inFrame()) {
 				cv::rectangle(input, known[i].getBBox(), cv::Scalar::all(255), 2);
@@ -123,12 +131,9 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		// 780000
-		std::cout << std::endl;
-
+		// Find holes in the ground
 		int startX = -1;
 		int endX = -1;
-
 		for (int i = 0; i < input.cols; i++) {
 			while (input.at<Vec3b>(205, i)[0] == 252 && input.at<Vec3b>(205, i)[1] == 148 && input.at<Vec3b>(205, i)[2] == 92) {
 				if (startX > -1) {
@@ -150,8 +155,19 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		// cv::cvtColor(input, input, CV_8UC4);
+		// Should Mario Jump?
+		for (Entity e : known) {
+			if (e.isHostile() &&
+				e.getLoc().x - mario.getLoc().x < 32 &&
+				e.getLoc().x - mario.getLoc().x > 0 &&
+				abs(e.getLoc().y - mario.getLoc().y) < 32) {
+				control.smallJump();
+				break;
+			}
+		}
+
 		end = GetTickCount();
+
 		if (end != start) {
 			fps = 1000 / (end - start);
 		}
@@ -178,57 +194,6 @@ cv::Mat getHue(std::string loc) {
 	cv::Mat ch[3];
 	cv::split(tmp, ch);
 	return ch[0];
-}
-
-// CV_TM_SQDIFF for match method presently.
-// TODO - Optimization
-void findEnemyTemplateInFrame(cv::Mat image, cv::Mat enemyTemplate, std::vector<cv::Rect> boundingBoxes, cv::Scalar drawColor, int match_method, double threshold) {
-	
-	cv::Mat result;
-	cv::Point minLoc;
-	cv::Point maxLoc;
-	cv::Point matchLoc;
-
-	double minVal;
-	double maxVal;
-
-	// Create the result matrix
-	int result_cols = image.cols - enemyTemplate.cols + 1;
-	int result_rows = image.rows - enemyTemplate.rows + 1;
-
-	result.create(result_rows, result_cols, CV_32FC1);
-
-	/// Do the Matching and Normalize
-	cv::matchTemplate(image, enemyTemplate, result, match_method);
-
-	// Try and find the first enemy template
-	cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
-	std::cout << minVal << std::endl;
-
-	// TODO - allow for max match technique
-	while (minVal < threshold) {
-		if (match_method == CV_TM_SQDIFF || match_method == CV_TM_SQDIFF_NORMED)
-		{
-			matchLoc = minLoc;
-		}
-		else
-		{
-			matchLoc = maxLoc;
-		}
-
-		// Populate our enemy bounding boxes
-		// TODO - Extrapolate enemy size
-		boundingBoxes.push_back(cv::Rect(matchLoc, cv::Point(matchLoc.x + enemyTemplate.cols, matchLoc.y + enemyTemplate.rows)));
-
-		// Draw what we see
-		cv::rectangle(image, matchLoc, cv::Point(matchLoc.x + enemyTemplate.cols, matchLoc.y + enemyTemplate.rows), drawColor, 2, 8, 0);
-
-		// Fill in our result to remove previously tracked objects
-		cv::floodFill(result, matchLoc, cv::Scalar(threshold), 0);
-
-		// Find the next template
-		cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
-	}
 }
 
 std::vector<cv::Mat> getSpriteList(WorldType world) {
