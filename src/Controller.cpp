@@ -6,6 +6,7 @@ Controller::Controller(Keyboard kb) {
 	right = 'D';
 	left = 'A';
 	jump = 'K';
+	start = '\n';
 	alreadyJumping = false;
 }
 
@@ -22,6 +23,10 @@ void Controller::jumpWatcher(unsigned int expiration) {
 void Controller::runRight() {
 	kb.keyUp(left);
 	kb.keyDown(right);
+}
+
+void Controller::enter() {
+	kb.keyClick(start);
 }
 
 void Controller::runLeft() {
@@ -54,7 +59,7 @@ void Controller::mediumJump() {
 void Controller::largeJump() {
 	if (!alreadyJumping) {
 		kb.keyDown(jump);
-		std::thread thr(&Controller::jumpWatcher, this, GetTickCount() + 1000);
+		std::thread thr(&Controller::jumpWatcher, this, GetTickCount() + 1250);
 		thr.detach();
 	}
 }

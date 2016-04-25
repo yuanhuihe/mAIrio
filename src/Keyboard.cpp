@@ -1,4 +1,5 @@
 #include "Keyboard.h"
+#include <iostream>
 
 // Windows implementation of Keyboard
 #ifdef _WIN32

@@ -108,6 +108,15 @@ Entity::Entity(cv::Point loc, EntityType type, int timeMS) {
 	setBoundingBox();
 }
 
+Entity::Entity(cv::Rect box, EntityType type, int timeMS) {
+	this->loc = cv::Point(box.x, box.y);
+	this->type = type;
+	msLastSeen = timeMS;
+	isInFrame = true;
+
+	bbox = cv::Rect(0, 0, box.width, box.height);
+}
+
 Entity::Entity(EntityType type) {
 	this->loc = cv::Point(0, 0);
 	this->type = type;
@@ -256,8 +265,32 @@ bool Entity::inFrame() {
 
 std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int timeMS) {
 	std::vector<Entity> ret;
+
+	// Find holes in the ground
+	int startX = -1;
+	int endX = -1;
+	for (int i = 0; i < image.cols; i++) {
+		while (image.at<cv::Vec3b>(205, i)[0] == 252 && image.at<cv::Vec3b>(205, i)[1] == 148 && image.at<cv::Vec3b>(205, i)[2] == 92) {
+			if (startX > -1) {
+				endX = i;
+			}
+			else {
+				startX = i;
+			}
+
+			if (++i >= image.cols) {
+				break;
+			}
+		}
+
+		if (startX > -1) {
+			ret.push_back(Entity(cv::Rect(startX, 205, endX - startX, 5), EntityType::HOLE, timeMS));
+			startX = -1;
+			endX = -1;
+		}
+	}
 	
-	// Only look at the right
+	// Now only look at the right
 	int origWidth = image.size().width;
 	image = image(cv::Rect(image.size().width - 40, 0, 40, image.size().height));
 	
@@ -271,6 +304,10 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	int method = cv::TM_SQDIFF;
 
 	for (EntityType t = EntityType::GOOMBA; t != EntityType::SIZE_ENTITY_TYPE; t = static_cast<EntityType>(t + 1)) {
+		if (t == EntityType::HOLE) {
+			continue;
+		}
+		
 		// Create the result matrix
 		int result_cols = image.cols - spriteTable[t].cols + 1;
 		int result_rows = image.rows - spriteTable[t].rows + 1;

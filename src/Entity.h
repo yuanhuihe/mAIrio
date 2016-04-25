@@ -23,6 +23,7 @@ enum EntityType {
 	//KOOPA_RED_R,
 	SHELL,
 	PIPE,
+	HOLE,
 	/*SHELL_RED,
 	PIRANHA, // We're going to check color above pipes to check for Piranhas, not template matching
 	BRICK,
@@ -47,6 +48,7 @@ protected:
 
 public:
 	Entity(cv::Point loc, EntityType type, int timeMS);
+	Entity(cv::Rect box, EntityType type, int timeMS);
 	Entity::Entity(EntityType type);
 	static int getDetThresh(EntityType type);
 	static cv::Mat spriteTable[EntityType::SIZE_ENTITY_TYPE];
