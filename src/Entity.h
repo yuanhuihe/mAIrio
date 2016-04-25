@@ -22,6 +22,7 @@ enum EntityType {
 	//KOOPA_RED_L,
 	//KOOPA_RED_R,
 	SHELL,
+	PIPE,
 	/*SHELL_RED,
 	PIRANHA, // We're going to check color above pipes to check for Piranhas, not template matching
 	BRICK,

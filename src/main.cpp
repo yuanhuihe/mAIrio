@@ -164,6 +164,18 @@ int main(int argc, char** argv) {
 				control.smallJump();
 				break;
 			}
+			else if (e.getType() == EntityType::PIPE && e.getLoc().x - mario.getLoc().x < 16 &&
+				e.getLoc().x - mario.getLoc().x > 0) {
+				if (abs(e.getLoc().y - mario.getLoc().y) < 36) {
+					std::cout << "med jump" << std::endl;
+					control.mediumJump();
+				}
+				else {
+					std::cout << "large jump" << std::endl;
+					// control.stop();
+					control.largeJump();
+				}
+			}
 		}
 
 		end = GetTickCount();
@@ -180,8 +192,14 @@ int main(int argc, char** argv) {
 
 		cv::imshow("Image", input);
 
-		if (cv::waitKey(1) == 27) {
+		int key_press = cv::waitKey(1);
+
+		if (key_press == 27) {
 			break;
+		}
+		else if (key_press == ' ') {
+			std::cout << "Enter" << std::endl;
+			control.enter();
 		}
 	}
 

@@ -17,6 +17,7 @@ void Entity::setBoundingBox() {
 	case EntityType::GOOMBA: bbox = cv::Rect(-3, -5, 16, 16); break;
 	case EntityType::KOOPA_L: bbox = cv::Rect(-5, -13, 16, 24); break;
 	case EntityType::KOOPA_R: bbox = cv::Rect(-2, -13, 16, 24); break;
+	case EntityType::PIPE: bbox = cv::Rect(-5, -6, 33, 32); break;
 	//case EntityType::KOOPA_RED_L: bbox = cv::Rect(-5, -13, 16, 24); break;
 	//case EntityType::KOOPA_RED_R: bbox = cv::Rect(-2, -13, 16, 24); break;
 	case EntityType::SHELL: bbox = cv::Rect(-4, -3, 16, 14); break;
@@ -45,6 +46,7 @@ int Entity::getDetThresh(EntityType type) {
 	case EntityType::GOOMBA: detThresh = 780000; break;
 	case EntityType::KOOPA_L: detThresh = 150000; break;
 	case EntityType::KOOPA_R: detThresh = 150000; break;
+	case EntityType::PIPE: detThresh = 150000; break;
 	//case EntityType::KOOPA_RED_L: detThresh = 150000; break;
 	//case EntityType::KOOPA_RED_R: detThresh = 150000; break;
 	case EntityType::SHELL: detThresh = 150000; break;
@@ -84,6 +86,7 @@ void Entity::fillSpriteTable(WorldType world) {
 	//Entity::spriteTable[EntityType::KOOPA_RED_L] = cv::imread("sprites/enemies/shared/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
 	//Entity::spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::PIPE] = cv::imread("sprites/misc/shared/pipe-cropped.png", CV_LOAD_IMAGE_COLOR);
 	/*Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick1.png", CV_LOAD_IMAGE_COLOR);
@@ -278,7 +281,7 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 			if (known[i].getType() == t) {
 				cv::Rect bbox = known[i].getBBox();
 				bbox.x -= (origWidth - maskedImage.cols);
-				std::cout << bbox.x << std::endl;
+				// std::cout << bbox.x << std::endl;
 				cv::rectangle(maskedImage, bbox, cv::Scalar::all(255), CV_FILLED);
 			}
 		}
@@ -366,6 +369,9 @@ std::vector<EntityType> Entity::nextStates() {
 		break;
 	case EntityType::SHELL:
 		ret.push_back(EntityType::SHELL);
+		break;
+	case EntityType::PIPE:
+		ret.push_back(EntityType::PIPE);
 		break;
 	}
 	return ret;
