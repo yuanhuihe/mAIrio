@@ -50,6 +50,7 @@ void Controller::smallJump() {
 
 void Controller::mediumJump() {
 	if (!alreadyJumping) {
+		alreadyJumping = true;
 		kb.keyDown(jump);
 		std::thread thr(&Controller::jumpWatcher, this, GetTickCount() + 250);
 		thr.detach();
@@ -58,8 +59,9 @@ void Controller::mediumJump() {
 
 void Controller::largeJump() {
 	if (!alreadyJumping) {
+		alreadyJumping = true;
 		kb.keyDown(jump);
-		std::thread thr(&Controller::jumpWatcher, this, GetTickCount() + 1250);
+		std::thread thr(&Controller::jumpWatcher, this, GetTickCount() + 1500);
 		thr.detach();
 	}
 }
