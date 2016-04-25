@@ -45,6 +45,20 @@ int main(int argc, char** argv) {
 	int fps;
 	std::vector<Entity> known;
 	const int PURGE_TIME = 500;
+	cv::Mat blockImage;
+	cv::Mat blockMask(224, 256, CV_8U);
+	cv::Mat connComp;
+
+	for (int i = 0; i < 224; i++) {
+		for (int j = 0; j < 256; j++) {
+			if (i < 200) {
+				blockMask.at<uchar>(i, j) = 255;
+			}
+			else {
+				blockMask.at<uchar>(i, j) = 0;
+			}
+		}
+	}
 
 	Entity::fillSpriteTable(WorldType::OVERWORLD);
 	
@@ -94,6 +108,27 @@ int main(int argc, char** argv) {
 
 		// Get rid of alpha
 		cv::cvtColor(input, input, CV_RGBA2RGB);
+		cv::split(input, inputCh);
+
+		// Find chiseled blocks
+		/*cv::Mat tmp1, tmp2, tmp3;
+		cv::inRange(inputCh[2], 252, 252, tmp1);
+		cv::inRange(inputCh[1], 188, 188, tmp2);
+		cv::bitwise_and(tmp1, tmp2, tmp3);
+		cv::inRange(inputCh[0], 176, 176, tmp1);
+		cv::bitwise_and(tmp1, tmp3, tmp2);
+		cv::bitwise_and(tmp2, blockMask, tmp1);
+		cv::erode(tmp1, tmp2, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
+		cv::dilate(tmp2, blockImage, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)), cv::Point(-1, -1), 3);
+		std::vector<std::vector<cv::Point>> contours;
+		std::vector<cv::Vec4i> hierarchy;
+		cv::findContours(blockImage, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+		for (int i = 0; i < contours.size(); i++) {
+			if (cv::contourArea(contours[i]) > 100) {
+				cv::drawContours(input, contours, i, cv::Scalar::all(255), cv::FILLED, 8, hierarchy);
+			}
+		}*/
+		
 
 		// Find Mario
 		mario.updateState(input, start);
