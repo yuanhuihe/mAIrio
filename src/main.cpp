@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 	DWORD start, end;
 	int fps;
 	std::vector<Entity> known;
-	const int PURGE_TIME = 1000;
+	const int PURGE_TIME = 500;
 
 	Entity::fillSpriteTable(WorldType::OVERWORLD);
 	
@@ -110,49 +110,34 @@ int main(int argc, char** argv) {
 
 		// Find known sprites
 		for (int i = 0; i < known.size(); i++) {
-			known[i].updateState(input, start);
+			if (known[i].getType() != EntityType::HOLE) {
+				known[i].updateState(input, start);
+			}
 		}
 
 		// Detect new sprites
 		std::vector<Entity> newEntities = Entity::watch(input, known, start);
+		std::vector<Entity> holes;
 
 		// Add newEntities to known
 		for (int i = 0; i < newEntities.size(); i++) {
-			known.push_back(newEntities[i]);
+			if (newEntities[i].getType() != EntityType::HOLE) {
+				known.push_back(newEntities[i]);
+			}
+			else {
+				holes.push_back(newEntities[i]);
+			}
 		}
 
 		// Draw all known sprites and delete old ones
 		for (int i = 0; i < known.size(); i++) {
-			if (known[i].inFrame()) {
-				cv::rectangle(input, known[i].getBBox(), cv::Scalar::all(255), 2);
-			}
-			else if (start - known[i].timeLastSeen() > PURGE_TIME) {
+			cv::rectangle(input, known[i].getBBox(), cv::Scalar::all(255), 2);
+			if (start - known[i].timeLastSeen() > PURGE_TIME) {
 				known.erase(known.begin() + i);
 			}
 		}
-
-		// Find holes in the ground
-		int startX = -1;
-		int endX = -1;
-		for (int i = 0; i < input.cols; i++) {
-			while (input.at<Vec3b>(205, i)[0] == 252 && input.at<Vec3b>(205, i)[1] == 148 && input.at<Vec3b>(205, i)[2] == 92) {
-				if (startX > -1) {
-					endX = i;
-				}
-				else {
-					startX = i;
-				}
-
-				if (++i >= input.cols) {
-					break;
-				}
-			}
-
-			if (startX > -1) {
-				cv::rectangle(input, cv::Rect(startX, 205, endX - startX, 5), cv::Scalar(255, 0, 0), 2);
-				startX = -1;
-				endX = -1;
-			}
+		for (int i = 0; i < holes.size(); i++) {
+			cv::rectangle(input, holes[i].getBBox(), cv::Scalar::all(255), 2);
 		}
 
 		// Should Mario Jump?
@@ -162,6 +147,18 @@ int main(int argc, char** argv) {
 				e.getLoc().x - mario.getLoc().x > 0 &&
 				abs(e.getLoc().y - mario.getLoc().y) < 32) {
 				control.smallJump();
+				break;
+			}
+		}
+		for (Entity e : holes) {
+			if (e.getLoc().x - mario.getLoc().x < 24 &&
+				e.getLoc().x - mario.getLoc().x > 0) {
+				if (e.getBBox().width < 30) {
+					control.smallJump();
+				}
+				else {
+					control.mediumJump();
+				}
 				break;
 			}
 		}
