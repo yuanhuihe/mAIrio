@@ -21,7 +21,7 @@ void Entity::setBoundingBox() {
 	case EntityType::QUESTION_Y: bbox = cv::Rect(-3, -3, 16, 16); break;
 	case EntityType::QUESTION_O: bbox = cv::Rect(-3, -3, 16, 16); break;
 	case EntityType::QUESTION_B: bbox = cv::Rect(-3, -3, 16, 16); break;
-	case EntityType::BRICK: bbox = cv::Rect(0, 0, 16, 16); break;
+	case EntityType::BRICK: bbox = cv::Rect(0, 0, 8, 8); break;
 	//case EntityType::KOOPA_RED_L: bbox = cv::Rect(-5, -13, 16, 24); break;
 	//case EntityType::KOOPA_RED_R: bbox = cv::Rect(-2, -13, 16, 24); break;
 	case EntityType::SHELL: bbox = cv::Rect(-4, -3, 16, 14); break;
@@ -55,7 +55,7 @@ int Entity::getDetThresh(EntityType type) {
 	case EntityType::QUESTION_Y: detThresh = 150000; break;
 	case EntityType::QUESTION_O: detThresh = 150000; break;
 	case EntityType::QUESTION_B: detThresh = 150000; break;
-	case EntityType::BRICK: detThresh = 150000; break;
+	case EntityType::BRICK: detThresh = 10000; break;
 	//case EntityType::KOOPA_RED_L: detThresh = 150000; break;
 	//case EntityType::KOOPA_RED_R: detThresh = 150000; break;
 	case EntityType::SHELL: detThresh = 150000; break;
@@ -104,7 +104,7 @@ void Entity::fillSpriteTable(WorldType world) {
 	Entity::spriteTable[EntityType::QUESTION_Y] = cv::imread("sprites/misc/" + worldStr + "/question1.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::QUESTION_O] = cv::imread("sprites/misc/" + worldStr + "/question2.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::QUESTION_B] = cv::imread("sprites/misc/" + worldStr + "/question3.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick_small.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::BEAM] = cv::imread("sprites/misc/shared/beam.png", CV_LOAD_IMAGE_COLOR);
 	/*Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
@@ -333,6 +333,9 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	double maxVal;
 	int method = cv::TM_SQDIFF;
 
+	int origWidth = image.size().width;
+	image = image(cv::Rect(0, 40, image.size().width, image.size().height - 40));
+
 	// Create the result matrix
 	int result_cols = image.cols - spriteTable[EntityType::BRICK].cols + 1;
 	int result_rows = image.rows - spriteTable[EntityType::BRICK].rows + 1;
@@ -346,7 +349,9 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 		// minLoc = cv::Point(minLoc.x + spriteTable[t].cols - 1, minLoc.y + spriteTable[t].rows - 1);
 
 		if (minVal < getDetThresh(EntityType::BRICK)) {
-			ret.push_back(Entity(minLoc, EntityType::BRICK, timeMS));
+			cv::Point originLoc = minLoc;
+			originLoc.y += 40;
+			ret.push_back(Entity(originLoc, EntityType::BRICK, timeMS));
 		}
 		else {
 			break;
@@ -354,12 +359,9 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 
 		result.at<float>(minLoc) = getDetThresh(EntityType::BRICK);
 	}
-	cv::imshow("result", result);
-	
 
 	// Now only look at the right
-	int origWidth = image.size().width;
-	image = image(cv::Rect(image.size().width - 40, 40, 40, image.size().height - 40));
+	image = image(cv::Rect(image.size().width - 40, 0, 40, image.size().height));
 
 	for (EntityType t = EntityType::GOOMBA; t != EntityType::SIZE_ENTITY_TYPE; t = static_cast<EntityType>(t + 1)) {
 		if (t == EntityType::HOLE || t == EntityType::BEAM || t == EntityType::BRICK) {
