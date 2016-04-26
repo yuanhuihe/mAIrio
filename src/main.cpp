@@ -166,8 +166,10 @@ int main(int argc, char** argv) {
 
 		// Draw all known sprites and delete old ones
 		for (int i = 0; i < known.size(); i++) {
-			cv::rectangle(input, known[i].getBBox(), cv::Scalar::all(255), 2);
-			if (start - known[i].timeLastSeen() > PURGE_TIME) {
+			if (known[i].inFrame()) {
+				cv::rectangle(input, known[i].getBBox(), cv::Scalar::all(255), 2);
+			}
+			else if (start - known[i].timeLastSeen() > PURGE_TIME) {
 				known.erase(known.begin() + i);
 			}
 		}
@@ -175,40 +177,90 @@ int main(int argc, char** argv) {
 			cv::rectangle(input, holes[i].getBBox(), cv::Scalar::all(255), 2);
 		}
 
+		bool farEnemy = false;
+		bool closeEnemy = false;
+		int pipeHeight = 0;
+		bool stairs = false;
+		bool stairGap = false;
+		int holeWidth = 0;
+
 		// Should Mario Jump?
 		for (Entity e : known) {
+			// If Mario needs to jump over an enemy
 			if (e.isHostile() &&
+				e.inFrame() &&
 				e.getLoc().x - mario.getLoc().x < 32 &&
 				e.getLoc().x - mario.getLoc().x > 0 &&
 				abs(e.getLoc().y - mario.getLoc().y) < 32) {
-				control.smallJump();
-				break;
+				closeEnemy = true;
 			}
+			// If Mario needs to jump over two enemies
+			else if (e.isHostile() &&
+				e.inFrame() &&
+				e.getLoc().x - mario.getLoc().x < 64 &&
+				e.getLoc().x - mario.getLoc().x >= 32 &&
+				abs(e.getLoc().y - mario.getLoc().y) < 32) {
+				farEnemy = true;
+			}
+			// If Mario needs to jump over a pipe
 			else if (e.getType() == EntityType::PIPE && e.getLoc().x - mario.getLoc().x < 16 &&
 				e.getLoc().x - mario.getLoc().x > 0) {
-				if (abs(e.getLoc().y - mario.getLoc().y) < 36) {
-					std::cout << "med jump" << std::endl;
-					control.mediumJump();
-				}
-				else {
-					std::cout << "large jump" << std::endl;
-					// control.stop();
-					control.largeJump();
-				}
+				pipeHeight = mario.getLoc().y - e.getLoc().y;
+				break;
 			}
-		}
-		for (Entity e : holes) {
-			if (e.getLoc().x - mario.getLoc().x < 24 &&
-				e.getLoc().x - mario.getLoc().x > 0) {
-				if (e.getBBox().width < 30) {
-					control.smallJump();
-				}
-				else {
-					control.mediumJump();
-				}
+			// If Mario needs to climb a staircase
+			else if (e.getType() == EntityType::CHISELED && e.getLoc().x - mario.getLoc().x < 16 &&
+				e.getLoc().x - mario.getLoc().x > 0 && abs(mario.getLoc().y - e.getLoc().y) < 4) {
+				stairs = true;
+				break;
+			}
+			// If Mario needs to jump the gap between staircase
+			else if (e.getType() == EntityType::CHISELED && e.getLoc().x - mario.getLoc().x < 64 &&
+				e.getLoc().x - mario.getLoc().x > 0 && mario.getLoc().y - e.getLoc().y > 0) {
+				stairGap = true;
 				break;
 			}
 		}
+		// If mario needs to jump over holes on the ground
+		for (Entity e : holes) {
+			if (e.getLoc().x - mario.getLoc().x < 16 &&
+				e.getLoc().x - mario.getLoc().x > 0) {
+				holeWidth = e.getBBox().width;
+				break;
+			}
+		}
+
+		// Handle movement
+		if (closeEnemy && !farEnemy) {
+			control.smallJump();
+		}
+		else if (closeEnemy && farEnemy) {
+			control.mediumJump();
+		}
+		else if (pipeHeight > 36) {
+			control.largeJump();
+		}
+		else if (pipeHeight > 0) {
+			control.mediumJump();
+		}
+		else if (stairs) {
+			control.stop();
+			control.smallJump();
+			control.runRight();
+		}
+		else if (stairGap) {
+			control.largeJump();
+		}
+		else if (holeWidth > 30) {
+			control.mediumJump();
+		}
+		else if (holeWidth > 0) {
+			control.smallJump();
+		}
+
+		std::cout << "Far: " << farEnemy << " Close: " << closeEnemy << " Pipe: " << pipeHeight << " Stairs: " << stairs << " Stair Gap: " << stairGap << " Hole: " << holeWidth << std::endl;
+
+		// std::cout << known.size() << std::endl;
 
 		end = GetTickCount();
 

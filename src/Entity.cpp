@@ -21,7 +21,7 @@ void Entity::setBoundingBox() {
 	//case EntityType::KOOPA_RED_L: bbox = cv::Rect(-5, -13, 16, 24); break;
 	//case EntityType::KOOPA_RED_R: bbox = cv::Rect(-2, -13, 16, 24); break;
 	case EntityType::SHELL: bbox = cv::Rect(-4, -3, 16, 14); break;
-	case EntityType::CHISELED: bbox = cv::Rect(-1, -1, 16, 16); break;
+	case EntityType::CHISELED: bbox = cv::Rect(-3, -3, 16, 16); break;
 	/*case EntityType::SHELL_RED: bbox = cv::Rect(-4, -3, 16, 14); break;
 	case EntityType::PIRANHA: bbox = cv::Rect(); break;
 	case EntityType::BRICK: bbox = cv::Rect(0, 0, 16, 16); break;
@@ -89,7 +89,7 @@ void Entity::fillSpriteTable(WorldType world) {
 	//Entity::spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::PIPE] = cv::imread("sprites/misc/shared/pipe-cropped.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::CHISELED] = cv::imread("sprites/misc/" + worldStr + "/block-chiseled-template.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::CHISELED] = cv::imread("sprites/misc/" + worldStr + "/block-chiseled.png", CV_LOAD_IMAGE_COLOR);
 	/*Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick1.png", CV_LOAD_IMAGE_COLOR);
@@ -195,10 +195,10 @@ bool Entity::updateState(cv::Mat image, int timeMS) {
 		type == EntityType::MARIO_BIG_R ||
 		type == EntityType::MARIO_FIRE_L ||
 		type == EntityType::MARIO_FIRE_R) {
-		margin = 20;
+		margin = 10;
 	}
 	else {
-		margin = 20;
+		margin = 5;
 	}
 
 	if (!isInFrame && (
@@ -412,6 +412,9 @@ std::vector<EntityType> Entity::nextStates() {
 		break;
 	case EntityType::PIPE:
 		ret.push_back(EntityType::PIPE);
+		break;
+	case EntityType::CHISELED:
+		ret.push_back(EntityType::CHISELED);
 		break;
 	}
 	return ret;

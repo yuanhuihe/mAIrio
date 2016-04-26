@@ -24,7 +24,7 @@ void Controller::runRight() {
 	kb.keyUp(left);
 	kb.keyDown(right);
 }
-
+ 
 void Controller::enter() {
 	kb.keyClick(start);
 }
@@ -61,7 +61,7 @@ void Controller::largeJump() {
 	if (!alreadyJumping) {
 		alreadyJumping = true;
 		kb.keyDown(jump);
-		std::thread thr(&Controller::jumpWatcher, this, GetTickCount() + 1500);
+		std::thread thr(&Controller::jumpWatcher, this, GetTickCount() + 1000);
 		thr.detach();
 	}
 }
