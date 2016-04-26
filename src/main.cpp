@@ -108,28 +108,6 @@ int main(int argc, char** argv) {
 
 		// Get rid of alpha
 		cv::cvtColor(input, input, CV_RGBA2RGB);
-		cv::split(input, inputCh);
-
-		// Find chiseled blocks
-		cv::Mat tmp1, tmp2, tmp3;
-		cv::inRange(inputCh[2], 252, 252, tmp1);
-		cv::inRange(inputCh[1], 188, 188, tmp2);
-		cv::bitwise_and(tmp1, tmp2, tmp3);
-		cv::inRange(inputCh[0], 176, 176, tmp1);
-		cv::bitwise_and(tmp1, tmp3, tmp2);
-		cv::bitwise_and(tmp2, blockMask, tmp1);
-		cv::erode(tmp1, tmp2, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
-		cv::dilate(tmp2, blockImage, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)), cv::Point(-1, -1), 3);
-		/*std::vector<std::vector<cv::Point>> contours;
-		std::vector<cv::Vec4i> hierarchy;
-		cv::findContours(blockImage, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-		for (int i = 0; i < contours.size(); i++) {
-			if (cv::contourArea(contours[i]) > 100) {
-				cv::drawContours(input, contours, i, cv::Scalar::all(255), cv::FILLED, 8, hierarchy);
-			}
-		}*/
-		// cv::imshow("tmp", tmp2);
-		
 
 		// Find Mario
 		mario.updateState(input, start);
@@ -146,7 +124,7 @@ int main(int argc, char** argv) {
 
 		// Find known sprites
 		for (int i = 0; i < known.size(); i++) {
-			if (known[i].getType() != EntityType::HOLE) {
+			if (known[i].getType() != EntityType::HOLE && known[i].getType() != EntityType::BRICK) {
 				known[i].updateState(input, start);
 			}
 		}
@@ -154,14 +132,18 @@ int main(int argc, char** argv) {
 		// Detect new sprites
 		std::vector<Entity> newEntities = Entity::watch(input, known, start);
 		std::vector<Entity> holes;
+		std::vector<Entity> bricks;
 
 		// Add newEntities to known
 		for (int i = 0; i < newEntities.size(); i++) {
-			if (newEntities[i].getType() != EntityType::HOLE) {
+			if (newEntities[i].getType() != EntityType::HOLE && newEntities[i].getType() != EntityType::BRICK) {
 				known.push_back(newEntities[i]);
 			}
-			else {
+			else if (newEntities[i].getType() == EntityType::HOLE) {
 				holes.push_back(newEntities[i]);
+			}
+			else if (newEntities[i].getType() == EntityType::BRICK) {
+				bricks.push_back(newEntities[i]);
 			}
 		}
 
@@ -176,6 +158,9 @@ int main(int argc, char** argv) {
 		}
 		for (int i = 0; i < holes.size(); i++) {
 			cv::rectangle(input, holes[i].getBBox(), cv::Scalar::all(255), 2);
+		}
+		for (int i = 0; i < bricks.size(); i++) {
+			cv::rectangle(input, bricks[i].getBBox(), cv::Scalar::all(255), 2);
 		}
 
 		bool farEnemy = false;

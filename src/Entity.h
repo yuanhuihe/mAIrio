@@ -28,8 +28,7 @@ enum EntityType {
 	QUESTION_Y,
 	QUESTION_O,
 	QUESTION_B,
-	BRICK1,
-	BRICK2,
+	BRICK,
 	BEAM,
 	/*SHELL_RED,
 	PIRANHA, // We're going to check color above pipes to check for Piranhas, not template matching
