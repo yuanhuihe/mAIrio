@@ -57,10 +57,10 @@ int main(int argc, char** argv) {
 			else {
 				blockMask.at<uchar>(i, j) = 0;
 			}
-		}
+		} 
 	}
 
-	Entity::fillSpriteTable(WorldType::OVERWORLD);
+	Entity::fillSpriteTable(WorldType::UNDERWORLD);
 	
 	cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);
 
@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
 	Controller control(kb);
 
 	while (1) {
-		control.runRight();
+		// control.runRight();
 		start = GetTickCount();
 
 		/*if (newWorldType) {
@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
 		cv::split(input, inputCh);
 
 		// Find chiseled blocks
-		/*cv::Mat tmp1, tmp2, tmp3;
+		cv::Mat tmp1, tmp2, tmp3;
 		cv::inRange(inputCh[2], 252, 252, tmp1);
 		cv::inRange(inputCh[1], 188, 188, tmp2);
 		cv::bitwise_and(tmp1, tmp2, tmp3);
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
 		cv::bitwise_and(tmp2, blockMask, tmp1);
 		cv::erode(tmp1, tmp2, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)));
 		cv::dilate(tmp2, blockImage, cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3)), cv::Point(-1, -1), 3);
-		std::vector<std::vector<cv::Point>> contours;
+		/*std::vector<std::vector<cv::Point>> contours;
 		std::vector<cv::Vec4i> hierarchy;
 		cv::findContours(blockImage, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 		for (int i = 0; i < contours.size(); i++) {
@@ -128,6 +128,7 @@ int main(int argc, char** argv) {
 				cv::drawContours(input, contours, i, cv::Scalar::all(255), cv::FILLED, 8, hierarchy);
 			}
 		}*/
+		// cv::imshow("tmp", tmp2);
 		
 
 		// Find Mario
@@ -233,28 +234,28 @@ int main(int argc, char** argv) {
 
 		// Handle movement
 		if (closeEnemy && !farEnemy) {
-			control.smallJump();
+			// smallJump();
 		}
 		else if (closeEnemy && farEnemy) {
-			control.mediumJump();
+			// control.mediumJump();
 		}
 		else if (pipeHeight > 36) {
-			control.largeJump();
+			// control.largeJump();
 		}
 		else if (pipeHeight > 0) {
-			control.mediumJump();
+			// control.mediumJump();
 		}
 		else if (stairGap) {
-			control.largeJump();
+			// control.largeJump();
 		}
 		else if (stairs) {
-			control.smallJump();
+			// control.smallJump();
 		}
 		else if (holeWidth > 30) {
-			control.mediumJump();
+			// control.mediumJump();
 		}
 		else if (holeWidth > 0) {
-			control.smallJump();
+			// control.smallJump();
 		}
 
 		std::cout << "Far: " << farEnemy << " Close: " << closeEnemy << " Pipe: " << pipeHeight << " Stairs: " << stairs << " Stair Gap: " << stairGap << " Hole: " << holeWidth << std::endl;
@@ -282,7 +283,7 @@ int main(int argc, char** argv) {
 		}
 		else if (key_press == ' ') {
 			std::cout << "Enter" << std::endl;
-			control.enter();
+			// control.enter();
 		}
 	}
 

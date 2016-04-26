@@ -27,6 +27,7 @@ void Entity::setBoundingBox() {
 	//case EntityType::KOOPA_RED_R: bbox = cv::Rect(-2, -13, 16, 24); break;
 	case EntityType::SHELL: bbox = cv::Rect(-4, -3, 16, 14); break;
 	case EntityType::CHISELED: bbox = cv::Rect(-3, -3, 16, 16); break;
+	case EntityType::BEAM: bbox = cv::Rect(-2, -2, 48, 8); break;
 	/*case EntityType::SHELL_RED: bbox = cv::Rect(-4, -3, 16, 14); break;
 	case EntityType::PIRANHA: bbox = cv::Rect(); break;
 	case EntityType::BRICK: bbox = cv::Rect(0, 0, 16, 16); break;
@@ -61,6 +62,7 @@ int Entity::getDetThresh(EntityType type) {
 	//case EntityType::KOOPA_RED_R: detThresh = 150000; break;
 	case EntityType::SHELL: detThresh = 150000; break;
 	case EntityType::CHISELED: detThresh = 150000; break;
+	case EntityType::BEAM: detThresh = 150000; break;
 	/*case EntityType::SHELL_RED: detThresh = 150000; break;
 	case EntityType::PIRANHA: detThresh = 150000; break;
 	case EntityType::BRICK: detThresh = 150000; break;
@@ -84,6 +86,8 @@ void Entity::fillSpriteTable(WorldType world) {
 		worldStr = "underworld";
 	}
 
+	std::cout << worldStr << std::endl;
+
 	// Fill spriteTable
 	spriteTable[EntityType::MARIO_SMALL_L] = cv::imread("sprites/mario/mario-small-left.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::MARIO_SMALL_R] = cv::imread("sprites/mario/mario-small-right.png", CV_LOAD_IMAGE_COLOR);
@@ -104,13 +108,14 @@ void Entity::fillSpriteTable(WorldType world) {
 	Entity::spriteTable[EntityType::QUESTION_B] = cv::imread("sprites/misc/" + worldStr + "/question3.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::BRICK1] = cv::imread("sprites/misc/" + worldStr + "/brick1.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::BRICK2] = cv::imread("sprites/misc/" + worldStr + "/brick2.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[EntityType::BEAM] = cv::imread("sprites/misc/shared/beam.png", CV_LOAD_IMAGE_COLOR);
 	/*Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick1.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::QUESTION]
 	spriteTable[EntityType::ROCK]
 	spriteTable[EntityType::FLAGPOLE]
-	spriteTable[EntityType::BEAM]
+	
 	spriteTable[EntityType::PIPE]
 	spriteTable[EntityType::MUSHROOM]
 	spriteTable[EntityType::FIREFLOWER]*/
@@ -234,13 +239,22 @@ bool Entity::updateState(cv::Mat image, int timeMS) {
 		height = std::min(bbox.height + margin * 2, image.rows - y);
 	}
 	cv::Mat roi = image(cv::Rect(x, y, width, height));
+	// cv::Mat roi = image.clone();
+	if (type == EntityType::MARIO_SMALL_L ||
+		type == EntityType::MARIO_SMALL_R ||
+		type == EntityType::MARIO_BIG_L ||
+		type == EntityType::MARIO_BIG_R ||
+		type == EntityType::MARIO_FIRE_L ||
+		type == EntityType::MARIO_FIRE_R) {
+	}
 	std::vector<EntityType> possStates = nextStates();
 
 	for (EntityType tmpType : possStates) {
 		// Create the result matrix
 		int result_cols = roi.cols - spriteTable[tmpType].cols + 1;
-		int result_rows = roi.rows - spriteTable[tmpType].rows + 1;
+		int result_rows = roi.rows - spriteTable[tmpType].rows + 1; 
 		result.create(result_rows, result_cols, CV_32FC1);
+		cv::Mat resultImg = result.clone();
 
 		// Do the Matching and Normalize
 		cv::matchTemplate(roi, spriteTable[tmpType], result, method);
@@ -309,7 +323,7 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	
 	// Now only look at the right
 	int origWidth = image.size().width;
-	image = image(cv::Rect(image.size().width - 40, 0, 40, image.size().height));
+	image = image(cv::Rect(image.size().width - 40, 40, 40, image.size().height - 40));
 	
 	cv::Mat result;
 	cv::Point minLoc;
@@ -321,7 +335,7 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	int method = cv::TM_SQDIFF;
 
 	for (EntityType t = EntityType::GOOMBA; t != EntityType::SIZE_ENTITY_TYPE; t = static_cast<EntityType>(t + 1)) {
-		if (t == EntityType::HOLE) {
+		if (t == EntityType::HOLE || t == EntityType::BEAM) {
 			continue;
 		}
 		
@@ -335,6 +349,7 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 			if (known[i].getType() == t) {
 				cv::Rect bbox = known[i].getBBox();
 				bbox.x -= (origWidth - maskedImage.cols);
+				bbox.y -= 40;
 				// std::cout << bbox.x << std::endl;
 				cv::rectangle(maskedImage, bbox, cv::Scalar::all(255), CV_FILLED);
 			}
@@ -360,6 +375,7 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 
 		if (minVal < getDetThresh(t)) { // We found one
 			minLoc.x += (origWidth - maskedImage.cols);
+			minLoc.y += 40;
 			ret.push_back(Entity(minLoc, t, timeMS));
 		}
 	}
@@ -448,6 +464,9 @@ std::vector<EntityType> Entity::nextStates() {
 		break;
 	case EntityType::BRICK2:
 		ret.push_back(EntityType::BRICK2);
+		break;
+	case EntityType::BEAM:
+		ret.push_back(EntityType::BEAM);
 		break;
 	}
 	return ret;
