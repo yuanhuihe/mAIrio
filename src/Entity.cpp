@@ -18,6 +18,11 @@ void Entity::setBoundingBox() {
 	case EntityType::KOOPA_L: bbox = cv::Rect(-5, -13, 16, 24); break;
 	case EntityType::KOOPA_R: bbox = cv::Rect(-2, -13, 16, 24); break;
 	case EntityType::PIPE: bbox = cv::Rect(-5, -6, 33, 32); break;
+	case EntityType::QUESTION_Y: bbox = cv::Rect(-3, -3, 16, 16); break;
+	case EntityType::QUESTION_O: bbox = cv::Rect(-3, -3, 16, 16); break;
+	case EntityType::QUESTION_B: bbox = cv::Rect(-3, -3, 16, 16); break;
+	case EntityType::BRICK1: bbox = cv::Rect(-3, -3, 16, 16); break;
+	case EntityType::BRICK2: bbox = cv::Rect(-3, -3, 16, 16); break;
 	//case EntityType::KOOPA_RED_L: bbox = cv::Rect(-5, -13, 16, 24); break;
 	//case EntityType::KOOPA_RED_R: bbox = cv::Rect(-2, -13, 16, 24); break;
 	case EntityType::SHELL: bbox = cv::Rect(-4, -3, 16, 14); break;
@@ -25,7 +30,6 @@ void Entity::setBoundingBox() {
 	/*case EntityType::SHELL_RED: bbox = cv::Rect(-4, -3, 16, 14); break;
 	case EntityType::PIRANHA: bbox = cv::Rect(); break;
 	case EntityType::BRICK: bbox = cv::Rect(0, 0, 16, 16); break;
-	case EntityType::QUESTION: bbox = cv::Rect(); break;
 	case EntityType::ROCK: bbox = cv::Rect(); break;
 	case EntityType::FLAGPOLE: bbox = cv::Rect(); break;
 	case EntityType::BEAM: bbox = cv::Rect(); break;
@@ -48,6 +52,11 @@ int Entity::getDetThresh(EntityType type) {
 	case EntityType::KOOPA_L: detThresh = 150000; break;
 	case EntityType::KOOPA_R: detThresh = 150000; break;
 	case EntityType::PIPE: detThresh = 150000; break;
+	case EntityType::QUESTION_Y: detThresh = 150000; break;
+	case EntityType::QUESTION_O: detThresh = 150000; break;
+	case EntityType::QUESTION_B: detThresh = 150000; break;
+	case EntityType::BRICK1: detThresh = 150000; break;
+	case EntityType::BRICK2: detThresh = 150000; break;
 	//case EntityType::KOOPA_RED_L: detThresh = 150000; break;
 	//case EntityType::KOOPA_RED_R: detThresh = 150000; break;
 	case EntityType::SHELL: detThresh = 150000; break;
@@ -90,6 +99,11 @@ void Entity::fillSpriteTable(WorldType world) {
 	Entity::spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::PIPE] = cv::imread("sprites/misc/shared/pipe-cropped.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::CHISELED] = cv::imread("sprites/misc/" + worldStr + "/block-chiseled.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::QUESTION_Y] = cv::imread("sprites/misc/" + worldStr + "/question1.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::QUESTION_O] = cv::imread("sprites/misc/" + worldStr + "/question2.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::QUESTION_B] = cv::imread("sprites/misc/" + worldStr + "/question3.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::BRICK1] = cv::imread("sprites/misc/" + worldStr + "/brick1.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::BRICK2] = cv::imread("sprites/misc/" + worldStr + "/brick2.png", CV_LOAD_IMAGE_COLOR);
 	/*Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick1.png", CV_LOAD_IMAGE_COLOR);
@@ -415,6 +429,25 @@ std::vector<EntityType> Entity::nextStates() {
 		break;
 	case EntityType::CHISELED:
 		ret.push_back(EntityType::CHISELED);
+		break;
+	case EntityType::QUESTION_Y:
+		ret.push_back(EntityType::QUESTION_Y);
+		ret.push_back(EntityType::QUESTION_O);
+		break;
+	case EntityType::QUESTION_O:
+		ret.push_back(EntityType::QUESTION_O);
+		ret.push_back(EntityType::QUESTION_B);
+		ret.push_back(EntityType::QUESTION_Y);
+		break;
+	case EntityType::QUESTION_B:
+		ret.push_back(EntityType::QUESTION_B);
+		ret.push_back(EntityType::QUESTION_O);
+		break;
+	case EntityType::BRICK1:
+		ret.push_back(EntityType::BRICK1);
+		break;
+	case EntityType::BRICK2:
+		ret.push_back(EntityType::BRICK2);
 		break;
 	}
 	return ret;

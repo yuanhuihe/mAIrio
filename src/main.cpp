@@ -186,6 +186,11 @@ int main(int argc, char** argv) {
 
 		// Should Mario Jump?
 		for (Entity e : known) {
+
+			bool forwardStairs = e.getType() == EntityType::CHISELED && e.getLoc().x - mario.getLoc().x < 16 &&
+				e.getLoc().x - mario.getLoc().x > 0 && abs(mario.getLoc().y - e.getLoc().y) < 8;
+			bool overStairs = e.getType() == EntityType::CHISELED && abs(e.getLoc().x - mario.getLoc().x) < mario.getBBox().width / 2
+				&& mario.getLoc().y < e.getLoc().y && abs(mario.getLoc().y - e.getLoc().y) < 32;
 			// If Mario needs to jump over an enemy
 			if (e.isHostile() &&
 				e.inFrame() &&
@@ -208,17 +213,13 @@ int main(int argc, char** argv) {
 				pipeHeight = mario.getLoc().y - e.getLoc().y;
 				break;
 			}
-			// If Mario needs to climb a staircase
-			else if (e.getType() == EntityType::CHISELED && e.getLoc().x - mario.getLoc().x < 16 &&
-				e.getLoc().x - mario.getLoc().x > 0 && abs(mario.getLoc().y - e.getLoc().y) < 4) {
-				stairs = true;
-				break;
-			}
 			// If Mario needs to jump the gap between staircase
-			else if (e.getType() == EntityType::CHISELED && e.getLoc().x - mario.getLoc().x < 64 &&
-				e.getLoc().x - mario.getLoc().x > 0 && mario.getLoc().y - e.getLoc().y > 0) {
+			else if (overStairs) {
 				stairGap = true;
-				break;
+			}
+			// If Mario needs to climb a staircase
+			else if (forwardStairs) {
+				stairs = true;
 			}
 		}
 		// If mario needs to jump over holes on the ground
@@ -243,13 +244,11 @@ int main(int argc, char** argv) {
 		else if (pipeHeight > 0) {
 			control.mediumJump();
 		}
-		else if (stairs) {
-			control.stop();
-			control.smallJump();
-			control.runRight();
-		}
 		else if (stairGap) {
 			control.largeJump();
+		}
+		else if (stairs) {
+			control.smallJump();
 		}
 		else if (holeWidth > 30) {
 			control.mediumJump();
