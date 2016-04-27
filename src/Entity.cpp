@@ -5,6 +5,8 @@
 
 #include "Entity.h"
 
+cv::Vec3b Entity::holeColor;
+
 // The top left point of the rectangle is where the sprite starts based off of its template
 void Entity::setBoundingBox() {
 	switch (type) {
@@ -79,9 +81,11 @@ void Entity::fillSpriteTable(WorldType world) {
 	std::string worldStr;
 	if (world == WorldType::OVERWORLD) {
 		worldStr = "overworld";
+		holeColor = cv::Vec3b(252, 148, 92);
 	}
 	else {
 		worldStr = "underworld";
+		holeColor = cv::Vec3b(0, 0, 0);
 	}
 
 	std::cout << worldStr << std::endl;
@@ -311,7 +315,7 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	int startX = -1;
 	int endX = -1;
 	for (int i = 0; i < image.cols; i++) {
-		while (image.at<cv::Vec3b>(205, i)[0] == 252 && image.at<cv::Vec3b>(205, i)[1] == 148 && image.at<cv::Vec3b>(205, i)[2] == 92) {
+		while (image.at<cv::Vec3b>(205, i) == holeColor) {
 			if (startX > -1) {
 				endX = i;
 			}
@@ -325,7 +329,9 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 		}
 
 		if (startX > -1) {
-			ret.push_back(Entity(cv::Rect(startX, 205, endX - startX, 5), EntityType::HOLE, timeMS));
+			if (endX - startX > 16) {
+				ret.push_back(Entity(cv::Rect(startX, 205, endX - startX, 5), EntityType::HOLE, timeMS));
+			}
 			startX = -1;
 			endX = -1;
 		}

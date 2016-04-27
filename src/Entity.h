@@ -50,6 +50,7 @@ protected:
 	void setBoundingBox();
 	bool isInFrame;
 	int msLastSeen;
+	static cv::Vec3b holeColor;
 
 public:
 	Entity(cv::Point loc, EntityType type, int timeMS);

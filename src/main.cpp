@@ -179,11 +179,15 @@ int main(int argc, char** argv) {
 		bool beneathPillar = false;
 		bool veryFarEnemy = false;
 		bool brickAbove = false;
+		bool deathFromAbove = false;
 
 		cv::Scalar marioFarRightAboveCenterColor = cv::Scalar(0, 255, 0);
 		cv::Point marioFarRightAboveCenter = mario.getCenter();
 		marioFarRightAboveCenter.y -= 16;
 		marioFarRightAboveCenter.x += 48;
+
+		cv::Scalar marioDeathFromAboveAreaColor = cv::Scalar(0, 255, 0);
+		cv::Rect marioDeathFromAboveArea(mario.getCenter().x + 96, mario.getCenter().y - 136, 48, 16);
 
 		cv::Scalar marioExtremeForwardCenterColor = cv::Scalar(0, 255, 0);
 		cv::Point marioExtremeForwardCenter = mario.getCenter();
@@ -293,6 +297,10 @@ int main(int argc, char** argv) {
 			else if (beneathStairs) {
 				beneathPillar = true;
 			}
+			else if (e.isHostile() && (e.getBBox() & marioDeathFromAboveArea).area() > 0) {
+				marioDeathFromAboveAreaColor = cv::Scalar(0, 255, 255);
+				deathFromAbove = true;
+			}
 		}
 		// If mario needs to jump over holes on the ground
 		for (Entity e : holes) {
@@ -311,11 +319,16 @@ int main(int argc, char** argv) {
 		cv::circle(input, marioStraightAboveCenter, 1, marioStraightAboveCenterColor, 2);
 		cv::circle(input, marioFarRightAboveCenter, 1, marioFarRightAboveCenterColor, 2);
 		cv::circle(input, marioExtremeForwardCenter, 1, marioExtremeForwardCenterColor, 2);
+		cv::rectangle(input, marioDeathFromAboveArea, marioDeathFromAboveAreaColor, 2);
 
 		if (brickAbove && (closeEnemy || farEnemy || veryFarEnemy)) {
 			control.runLeft();
-			std::cout << "Left!" << std::endl;
-		} else{
+		}
+		else if (deathFromAbove) {
+			control.stop();
+			std::cout << "Stop!" << std::endl;
+		}
+		else {
 			control.runRight();
 		}
 
