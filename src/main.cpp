@@ -14,7 +14,6 @@
 #include "Keyboard.h"
 #include "Controller.h"
 
-std::vector<cv::Mat> getSpriteList(WorldType world);
 cv::Mat getHue(std::string loc);
 
 // Global Window handle
@@ -281,60 +280,4 @@ cv::Mat getHue(std::string loc) {
 	cv::Mat ch[3];
 	cv::split(tmp, ch);
 	return ch[0];
-}
-
-std::vector<cv::Mat> getSpriteList(WorldType world) {
-	std::vector<cv::Mat> list;
-
-	std::string worldStr;
-	if (world == WorldType::OVERWORLD) {
-		worldStr = "overworld";
-	}
-	else {
-		worldStr = "underworld";
-	}
-
-	// It works for overworld
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png"));
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa-left-template.png"));
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/goomba1.png"));
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/goomba2.png"));
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/goomba-flat.png"));
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa1.png"));
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa2.png"));
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa3.png"));
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa4.png"));
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/koopa-shell.png"));
-	// list.push_back(cv::imread("sprites/enemies/shared/koopa1.png"));
-	// list.push_back(cv::imread("sprites/enemies/shared/koopa2.png"));
-	// list.push_back(cv::imread("sprites/enemies/shared/koopa3.png"));
-	// list.push_back(cv::imread("sprites/enemies/shared/koopa4.png"));
-	// list.push_back(cv::imread("sprites/enemies/shared/koopa-shell.png"));
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/shell.png"));
-	// list.push_back(cv::imread("sprites/enemies/shared/shell.png"));
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/piranha1.png"));
-	// list.push_back(cv::imread("sprites/enemies/" + worldStr + "/piranha2.png"));
-	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/brick1.png"));
-	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/brick2.png"));
-	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/question1.png"));
-	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/question2.png"));
-	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/question3.png"));
-	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/rock.png"));
-	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/block-chiseled.png"));
-	/* list.push_back(cv::imread("sprites/misc/" + worldStr + "/used-block.png")); */
-	// list.push_back(cv::imread("sprites/misc/" + worldStr + "/flagpole.png"));
-	// list.push_back(cv::imread("sprites/misc/shared/beam-short.png"));
-	// list.push_back(cv::imread("sprites/misc/shared/beam-medium.png"));
-	// list.push_back(cv::imread("sprites/misc/shared/beam-long.png"));
-	// list.push_back(cv::imread("sprites/misc/shared/pipe-up.png"));
-	// list.push_back(cv::imread("sprites/misc/shared/pipe-down.png"));
-	// list.push_back(cv::imread("sprites/misc/shared/pipe-left.png"));
-	// list.push_back(cv::imread("sprites/misc/shared/pipe-t.png"));
-	// list.push_back(cv::imread("sprites/misc/shared/pipe-tess.png"));
-	// list.push_back(cv::imread("sprites/powerups/shared/mushroom.png"));
-	if (world == WorldType::OVERWORLD) {
-		// list.push_back(getHue("sprites/misc/overworld/flagpole.png"));
-	}
-
-	return list;
 }

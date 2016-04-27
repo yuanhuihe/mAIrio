@@ -51,7 +51,7 @@ int Entity::getDetThresh(EntityType type) {
 	case EntityType::GOOMBA: detThresh = 780000; break;
 	case EntityType::KOOPA_L: detThresh = 150000; break;
 	case EntityType::KOOPA_R: detThresh = 150000; break;
-	case EntityType::PIPE: detThresh = 150000; break;
+	case EntityType::PIPE: detThresh = 250000; break;
 	case EntityType::QUESTION_Y: detThresh = 150000; break;
 	case EntityType::QUESTION_O: detThresh = 150000; break;
 	case EntityType::QUESTION_B: detThresh = 150000; break;
@@ -217,6 +217,10 @@ bool Entity::updateState(cv::Mat image, int timeMS) {
 	else if (type == EntityType::BRICK) {
 		x_margin = 3;
 		y_margin = 0;
+	}
+	else if (type == EntityType::GOOMBA) {
+		x_margin = 5;
+		y_margin = 10;
 	}
 	else {
 		x_margin = 5;
