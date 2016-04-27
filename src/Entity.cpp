@@ -21,7 +21,7 @@ void Entity::setBoundingBox() {
 	case EntityType::QUESTION_Y: bbox = cv::Rect(-3, -3, 16, 16); break;
 	case EntityType::QUESTION_O: bbox = cv::Rect(-3, -3, 16, 16); break;
 	case EntityType::QUESTION_B: bbox = cv::Rect(-3, -3, 16, 16); break;
-	case EntityType::BRICK: bbox = cv::Rect(0, 0, 8, 8); break;
+	case EntityType::BRICK: bbox = cv::Rect(0, -1, 8, 9); break;
 	//case EntityType::KOOPA_RED_L: bbox = cv::Rect(-5, -13, 16, 24); break;
 	//case EntityType::KOOPA_RED_R: bbox = cv::Rect(-2, -13, 16, 24); break;
 	case EntityType::SHELL: bbox = cv::Rect(-4, -3, 16, 14); break;
@@ -104,7 +104,7 @@ void Entity::fillSpriteTable(WorldType world) {
 	Entity::spriteTable[EntityType::QUESTION_Y] = cv::imread("sprites/misc/" + worldStr + "/question1.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::QUESTION_O] = cv::imread("sprites/misc/" + worldStr + "/question2.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::QUESTION_B] = cv::imread("sprites/misc/" + worldStr + "/question3.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick_small.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick_smaller.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::BEAM] = cv::imread("sprites/misc/shared/beam_cropped.png", CV_LOAD_IMAGE_COLOR);
 	/*Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);

@@ -85,13 +85,7 @@ int main(int argc, char** argv) {
 	Controller control(kb);
 
 	while (1) {
-		control.runRight();
 		start = GetTickCount();
-
-		/*if (newWorldType) {
-			// Determine type of world
-			spriteList = getSpriteList(world);
-		}*/
 
 		// cap >> input;
 		if (emulator_window != NULL) {
@@ -174,55 +168,130 @@ int main(int argc, char** argv) {
 
 		bool farEnemy = false;
 		bool closeEnemy = false;
-		int pipeHeight = 0;
+		bool smallPipe = false;
+		bool largePipe = false;
 		bool stairs = false;
 		bool stairGap = false;
 		int holeWidth = 0;
 		bool forwardStairs = false;
 		bool overStairs = false;
 		bool beneathStairs = false;
+		bool beneathPillar = false;
+		bool veryFarEnemy = false;
+		bool brickAbove = false;
+
+		cv::Scalar marioFarRightAboveCenterColor = cv::Scalar(0, 255, 0);
+		cv::Point marioFarRightAboveCenter = mario.getCenter();
+		marioFarRightAboveCenter.y -= 16;
+		marioFarRightAboveCenter.x += 48;
+
+		cv::Scalar marioExtremeForwardCenterColor = cv::Scalar(0, 255, 0);
+		cv::Point marioExtremeForwardCenter = mario.getCenter();
+		marioExtremeForwardCenter.x += 64;
+
+		cv::Scalar marioStraightAboveCenterColor = cv::Scalar(0, 255, 0);
+		cv::Point marioStraightAboveCenter = mario.getCenter();
+		marioStraightAboveCenter.y -= 16;
+
+		cv::Scalar marioForwardCenterColor = cv::Scalar(0, 255, 0);
+		cv::Point marioForwardCenter = mario.getCenter();
+		marioForwardCenter.x += 20;
+
+		cv::Scalar marioFarForwardCenterColor = cv::Scalar(0, 255, 0);
+		cv::Point marioFarForwardCenter = mario.getCenter();
+		marioFarForwardCenter.x += 48;
+
+		cv::Scalar marioUnderCenterColor = cv::Scalar(0, 255, 0);
+		cv::Point marioUnderCenter = mario.getCenter();
+		marioUnderCenter.y += 16;
+
+		cv::Scalar marioAboveCenterColor = cv::Scalar(0, 255, 0);
+		cv::Point marioAboveCenter = mario.getCenter();
+		marioAboveCenter.x += 16;
+		marioAboveCenter.y -= 16;
+
+		cv::Scalar marioFarAboveCenterColor = cv::Scalar(0, 255, 0);
+		cv::Point marioFarAboveCenter = mario.getCenter();
+		marioFarAboveCenter.x += 16;
+		marioFarAboveCenter.y -= 32;
+
+		for (Entity b : bricks) {
+			if (b.getBBox().contains(marioFarAboveCenter)) {
+				brickAbove = true;
+				marioFarAboveCenterColor = cv::Scalar(0, 255, 255);
+			}
+			else if (b.getBBox().contains(marioStraightAboveCenter)) {
+				brickAbove = true;
+				marioStraightAboveCenterColor = cv::Scalar(0, 255, 255);
+			}
+			else if (b.getBBox().contains(marioAboveCenter)) {
+				brickAbove = true;
+				marioAboveCenterColor = cv::Scalar(0, 255, 255);
+			}
+			else if (b.getBBox().contains(marioFarRightAboveCenter)) {
+				brickAbove = true;
+				marioFarRightAboveCenterColor = cv::Scalar(0, 255, 255);
+			}
+		}
 
 		// Should Mario Jump?
 		for (Entity e : known) {
+			forwardStairs |= e.getType() == EntityType::CHISELED && e.getBBox().contains(marioForwardCenter);
+			overStairs |= e.getType() == EntityType::CHISELED && e.getBBox().contains(marioUnderCenter);
+			beneathStairs |= e.getType() == EntityType::CHISELED && e.getBBox().contains(marioAboveCenter);
 
-			forwardStairs |= e.getType() == EntityType::CHISELED && e.getLoc().x - mario.getLoc().x < 24 &&
-				e.getLoc().x - mario.getLoc().x > 0 && abs(mario.getLoc().y - e.getLoc().y) < 8;
+			if (forwardStairs) {
+				marioForwardCenterColor = cv::Scalar(0, 255, 255);
+			}
 
-			overStairs |= e.getType() == EntityType::CHISELED && abs(e.getLoc().x - mario.getLoc().x) < mario.getBBox().width / 2
-				&& mario.getLoc().y < e.getLoc().y && abs(mario.getLoc().y - e.getLoc().y) < 24;
+			if (overStairs) {
+				marioUnderCenterColor = cv::Scalar(0, 255, 255);
+			}
 
-			beneathStairs |= e.getType() == EntityType::CHISELED && e.getLoc().x - mario.getLoc().x < 24 &&
-				e.getLoc().x - mario.getLoc().x > 0 && mario.getLoc().y - e.getLoc().y < 24 && mario.getLoc().y - e.getLoc().y > 8;
-			
+			if (beneathStairs) {
+				marioAboveCenterColor = cv::Scalar(0, 255, 255);
+			}
+
 			// If Mario needs to jump over an enemy
 			if (e.isHostile() &&
 				e.inFrame() &&
-				e.getLoc().x - mario.getLoc().x < 32 &&
-				e.getLoc().x - mario.getLoc().x > 0 &&
-				abs(e.getLoc().y - mario.getLoc().y) < 32) {
+				e.getBBox().contains(marioForwardCenter)) {
 				closeEnemy = true;
+				marioForwardCenterColor = cv::Scalar(0, 255, 255);
+			}
+			else if (e.isHostile() &&
+				e.inFrame() &&
+				e.getBBox().contains(marioExtremeForwardCenter)) {
+				veryFarEnemy = true;
+				marioExtremeForwardCenterColor = cv::Scalar(0, 255, 255);
 			}
 			// If Mario needs to jump over two enemies
 			else if (e.isHostile() &&
 				e.inFrame() &&
-				e.getLoc().x - mario.getLoc().x < 64 &&
-				e.getLoc().x - mario.getLoc().x >= 32 &&
-				abs(e.getLoc().y - mario.getLoc().y) < 32) {
+				e.getBBox().contains(marioFarForwardCenter)) {
 				farEnemy = true;
+				marioFarForwardCenterColor = cv::Scalar(0, 255, 255);
 			}
 			// If Mario needs to jump over a pipe
-			else if (e.getType() == EntityType::PIPE && e.getLoc().x - mario.getLoc().x < 16 &&
-				e.getLoc().x - mario.getLoc().x > 0) {
-				pipeHeight = mario.getLoc().y - e.getLoc().y;
-				break;
+			else if (e.getType() == EntityType::PIPE && e.getBBox().contains(marioAboveCenter)) {
+				smallPipe = true;
+				marioAboveCenterColor = cv::Scalar(0, 255, 255);
 			}
-			// If Mario needs to jump the gap between staircase
-			else if ((overStairs && !forwardStairs) || beneathStairs) {
-				stairGap = true;
+			// If Mario needs to jump over a pipe
+			else if (e.getType() == EntityType::PIPE && e.getBBox().contains(marioFarAboveCenter)) {
+				largePipe = true;
+				marioFarAboveCenterColor = cv::Scalar(0, 255, 255);
 			}
 			// If Mario needs to climb a staircase
 			else if (forwardStairs) {
 				stairs = true;
+			}
+			// If Mario needs to jump the gap between staircase
+			else if ((overStairs && !forwardStairs)) {
+				stairGap = true;
+			}
+			else if (beneathStairs) {
+				beneathPillar = true;
 			}
 		}
 		// If mario needs to jump over holes on the ground
@@ -234,6 +303,22 @@ int main(int argc, char** argv) {
 			}
 		}
 
+		cv::circle(input, marioForwardCenter, 1, marioForwardCenterColor, 2);
+		cv::circle(input, marioUnderCenter, 1, marioUnderCenterColor, 2);
+		cv::circle(input, marioAboveCenter, 1, marioAboveCenterColor, 2);
+		cv::circle(input, marioFarAboveCenter, 1, marioFarAboveCenterColor, 2);
+		cv::circle(input, marioFarForwardCenter, 1, marioFarForwardCenterColor, 2);
+		cv::circle(input, marioStraightAboveCenter, 1, marioStraightAboveCenterColor, 2);
+		cv::circle(input, marioFarRightAboveCenter, 1, marioFarRightAboveCenterColor, 2);
+		cv::circle(input, marioExtremeForwardCenter, 1, marioExtremeForwardCenterColor, 2);
+
+		if (brickAbove && (closeEnemy || farEnemy || veryFarEnemy)) {
+			control.runLeft();
+			std::cout << "Left!" << std::endl;
+		} else{
+			control.runRight();
+		}
+
 		// Handle movement
 		if (closeEnemy && !farEnemy) {
 			control.smallJump();
@@ -241,13 +326,16 @@ int main(int argc, char** argv) {
 		else if (closeEnemy && farEnemy) {
 			control.mediumJump();
 		}
-		else if (pipeHeight > 36) {
+		else if (largePipe) {
 			control.largeJump();
 		}
-		else if (pipeHeight > 0) {
+		else if (smallPipe) {
 			control.mediumJump();
 		}
-		else if (stairGap) {
+		else if (beneathStairs) {
+			control.largeJump();
+		}
+		else if (stairGap && !stairs) {
 			control.largeJump();
 		}
 		else if (stairs) {
@@ -260,7 +348,7 @@ int main(int argc, char** argv) {
 			control.smallJump();
 		}
 
-		std::cout << " Forward: " << forwardStairs << " Over: " << overStairs << " Under: " << beneathStairs << std::endl;
+		// std::cout << " Forward: " << forwardStairs << " Over: " << overStairs << " Under: " << beneathStairs << std::endl;
 		//  "Far: " << farEnemy << " Close: " << closeEnemy << " Pipe: " << pipeHeight << " Hole: " << holeWidth 
 
 		// std::cout << known.size() << std::endl;

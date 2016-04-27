@@ -61,7 +61,7 @@ void Controller::largeJump() {
 	if (!alreadyJumping) {
 		alreadyJumping = true;
 		kb.keyDown(jump);
-		std::thread thr(&Controller::jumpWatcher, this, GetTickCount() + 1000);
+		std::thread thr(&Controller::jumpWatcher, this, GetTickCount() + 700);
 		thr.detach();
 	}
 }
