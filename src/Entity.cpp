@@ -51,7 +51,7 @@ int Entity::getDetThresh(EntityType type) {
 	case EntityType::GOOMBA: detThresh = 780000; break;
 	case EntityType::KOOPA_L: detThresh = 150000; break;
 	case EntityType::KOOPA_R: detThresh = 150000; break;
-	case EntityType::PIPE: detThresh = 250000; break;
+	case EntityType::PIPE: detThresh = 150000; break;
 	case EntityType::QUESTION_Y: detThresh = 150000; break;
 	case EntityType::QUESTION_O: detThresh = 150000; break;
 	case EntityType::QUESTION_B: detThresh = 150000; break;
@@ -407,7 +407,7 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	}
 
 	// Now only look at the right (regular entities)
-	image = image(cv::Rect(image.size().width - 40, 0, 40, image.size().height));
+	image = image(cv::Rect(image.size().width - 40, 40, 40, image.size().height - 40));
 
 	for (EntityType t = EntityType::GOOMBA; t != EntityType::SIZE_ENTITY_TYPE; t = static_cast<EntityType>(t + 1)) {
 		if (t == EntityType::HOLE || t == EntityType::BEAM || t == EntityType::BRICK || t == EntityType::BEAM) {
@@ -432,17 +432,6 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 
 		// Do the Matching and Normalize
 		cv::matchTemplate(maskedImage, spriteTable[t], result, method);
-
-		// White out the Entities we know about of this type
-		/* for (int i = 0; i < known.size(); i++) {
-			if (known[i].getType() == t) {
-				for (int m = std::max(0, bbox.y); m < std::min(result.size().height, bbox.y + bbox.height); m++) {
-					for (int n = std::max(0, bbox.x); m < std::min(result.size().width, bbox.x + bbox.width); n++) {
-						result.at<float>(cv::Point(n, m)) = std::numeric_limits<float>::max();
-					}
-				}
-			}
-		} */
 
 		// Try and find the first enemy template
 		cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());

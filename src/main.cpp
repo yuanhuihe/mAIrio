@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 		} 
 	}
 
-	Entity::fillSpriteTable(WorldType::UNDERWORLD);
+	Entity::fillSpriteTable(WorldType::OVERWORLD);
 	
 	cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);
 
