@@ -31,6 +31,12 @@ BOOL CALLBACK EnumWindowsProcMy(HWND hwnd, LPARAM lParam)
 	return TRUE;
 }
 
+enum MarioDirection {
+	LEFT,
+	STOP,
+	RIGHT
+};
+
 int main(int argc, char** argv) {
 	cv::VideoCapture cap;
 	cv::Mat input;
@@ -48,6 +54,7 @@ int main(int argc, char** argv) {
 	cv::Mat blockMask(224, 256, CV_8U);
 	cv::Mat connComp;
 	WorldType world = WorldType::OVERWORLD;
+	MarioDirection dir = MarioDirection::STOP;
 
 	for (int i = 0; i < 224; i++) {
 		for (int j = 0; j < 256; j++) {
@@ -177,9 +184,12 @@ int main(int argc, char** argv) {
 		bool overStairs = false;
 		bool beneathStairs = false;
 		bool beneathPillar = false;
-		bool veryFarEnemy = false;
+		bool enemyInForwardArea = false;
 		bool brickAbove = false;
 		bool deathFromAbove = false;
+		bool closeEnemyLeft = false;
+		bool stairsInForwardArea = false;
+		bool enemyInStairArea = false;
 
 		cv::Scalar marioFarRightAboveCenterColor = cv::Scalar(0, 255, 0);
 		cv::Point marioFarRightAboveCenter = mario.getCenter();
@@ -189,9 +199,18 @@ int main(int argc, char** argv) {
 		cv::Scalar marioDeathFromAboveAreaColor = cv::Scalar(0, 255, 0);
 		cv::Rect marioDeathFromAboveArea(mario.getCenter().x + 96, mario.getCenter().y - 136, 48, 16);
 
-		cv::Scalar marioExtremeForwardCenterColor = cv::Scalar(0, 255, 0);
-		cv::Point marioExtremeForwardCenter = mario.getCenter();
-		marioExtremeForwardCenter.x += 64;
+		cv::Scalar marioDeathFromBelowAreaColor = cv::Scalar(0, 255, 0);
+		cv::Rect marioDeathFromBelowArea(mario.getCenter().x + 40, mario.getCenter().y + 56, 16, 16);
+
+		cv::Scalar marioForwardAreaColor = cv::Scalar(0, 255, 0);
+		cv::Rect marioForwardArea(mario.getCenter().x + 8, mario.getCenter().y - 8, 64, 16);
+
+		cv::Scalar marioStairAreaColor = cv::Scalar(0, 255, 0);
+		cv::Rect marioStairArea[4];
+		for (int i = 0; i < 4; i++) {
+			marioStairArea[i] = cv::Rect(mario.getCenter().x + 40 + i * 16, mario.getCenter().y - 24 - i * 16, 16, 16);
+		}
+		//cv::RotatedRect marioStairArea(cv::Point(mario.getCenter().x + 64, mario.getCenter().y - 40), cv::Size(80, 16), -45);
 
 		cv::Scalar marioStraightAboveCenterColor = cv::Scalar(0, 255, 0);
 		cv::Point marioStraightAboveCenter = mario.getCenter();
@@ -200,6 +219,10 @@ int main(int argc, char** argv) {
 		cv::Scalar marioForwardCenterColor = cv::Scalar(0, 255, 0);
 		cv::Point marioForwardCenter = mario.getCenter();
 		marioForwardCenter.x += 20;
+
+		cv::Scalar marioReverseCenterColor = cv::Scalar(0, 255, 0);
+		cv::Point marioReverseCenter = mario.getCenter();
+		marioReverseCenter.x -= 20;
 
 		cv::Scalar marioFarForwardCenterColor = cv::Scalar(0, 255, 0);
 		cv::Point marioFarForwardCenter = mario.getCenter();
@@ -265,9 +288,9 @@ int main(int argc, char** argv) {
 			}
 			else if (e.isHostile() &&
 				e.inFrame() &&
-				e.getBBox().contains(marioExtremeForwardCenter)) {
-				veryFarEnemy = true;
-				marioExtremeForwardCenterColor = cv::Scalar(0, 255, 255);
+				e.getBBox().contains(marioReverseCenter)) {
+				closeEnemyLeft = true;
+				marioReverseCenterColor = cv::Scalar(0, 255, 255);
 			}
 			// If Mario needs to jump over two enemies
 			else if (e.isHostile() &&
@@ -297,9 +320,38 @@ int main(int argc, char** argv) {
 			else if (beneathStairs) {
 				beneathPillar = true;
 			}
-			else if (e.isHostile() && (e.getBBox() & marioDeathFromAboveArea).area() > 0) {
+			
+			if (e.isHostile() && (e.getBBox() & marioDeathFromAboveArea).area() > 0) {
 				marioDeathFromAboveAreaColor = cv::Scalar(0, 255, 255);
 				deathFromAbove = true;
+			}
+
+			if (e.isHostile() && (e.getBBox() & marioDeathFromBelowArea).area() > 0) {
+				marioDeathFromBelowAreaColor = cv::Scalar(0, 255, 255);
+				deathFromAbove = true;
+			}
+
+			if (e.isHostile() &&
+				(((e.getBBox() & marioStairArea[0]).area() > 0) ||
+				((e.getBBox() & marioStairArea[1]).area() > 0) ||
+				((e.getBBox() & marioStairArea[2]).area() > 0) ||
+				((e.getBBox() & marioStairArea[3]).area() > 0))) {
+				marioStairAreaColor = cv::Scalar(0, 255, 255);
+				enemyInStairArea = true;
+			}
+
+			if (e.isHostile() &&
+				e.inFrame() &&
+				(e.getBBox() & marioForwardArea).area() > 0) {
+				enemyInForwardArea = true;
+				marioForwardAreaColor = cv::Scalar(0, 255, 255);
+			}
+
+			if (e.getType() == EntityType::CHISELED &&
+				e.inFrame() &&
+				(e.getBBox() & marioForwardArea).area() > 0) {
+				stairsInForwardArea = true;
+				marioForwardAreaColor = cv::Scalar(0, 255, 255);
 			}
 		}
 		// If mario needs to jump over holes on the ground
@@ -312,32 +364,49 @@ int main(int argc, char** argv) {
 		}
 
 		cv::circle(input, marioForwardCenter, 1, marioForwardCenterColor, 2);
+		cv::circle(input, marioReverseCenter, 1, marioReverseCenterColor, 2);
 		cv::circle(input, marioUnderCenter, 1, marioUnderCenterColor, 2);
 		cv::circle(input, marioAboveCenter, 1, marioAboveCenterColor, 2);
 		cv::circle(input, marioFarAboveCenter, 1, marioFarAboveCenterColor, 2);
 		cv::circle(input, marioFarForwardCenter, 1, marioFarForwardCenterColor, 2);
 		cv::circle(input, marioStraightAboveCenter, 1, marioStraightAboveCenterColor, 2);
 		cv::circle(input, marioFarRightAboveCenter, 1, marioFarRightAboveCenterColor, 2);
-		cv::circle(input, marioExtremeForwardCenter, 1, marioExtremeForwardCenterColor, 2);
+		cv::rectangle(input, marioForwardArea, marioForwardAreaColor, 2);
 		cv::rectangle(input, marioDeathFromAboveArea, marioDeathFromAboveAreaColor, 2);
-
-		if (brickAbove && (closeEnemy || farEnemy || veryFarEnemy)) {
-			control.runLeft();
+		cv::rectangle(input, marioDeathFromBelowArea, marioDeathFromBelowAreaColor, 2);
+		for (int i = 0; i < 4; i++) {
+			cv::rectangle(input, marioStairArea[i], marioStairAreaColor, 2);
 		}
-		else if (deathFromAbove) {
+
+		if (brickAbove && (closeEnemy || farEnemy || enemyInForwardArea)) {
+			control.runLeft();
+			dir = MarioDirection::LEFT;
+		}
+		else if (deathFromAbove || (stairsInForwardArea && enemyInStairArea)) {
 			control.stop();
-			std::cout << "Stop!" << std::endl;
+			dir = MarioDirection::STOP;
+			std::cout << "Stop!" << start << std::endl;
 		}
 		else {
 			control.runRight();
+			dir = MarioDirection::RIGHT;
 		}
 
 		// Handle movement
 		if (closeEnemy && !farEnemy) {
-			control.smallJump();
+			if (dir == MarioDirection::STOP) {
+				control.mediumJump();
+			}
+			else {
+				control.smallJump();
+			}
 		}
 		else if (closeEnemy && farEnemy) {
 			control.mediumJump();
+			std::cout << "Enemy Group!" << std::endl;
+		}
+		else if (closeEnemyLeft) {
+			control.smallJump();
 		}
 		else if (largePipe) {
 			control.largeJump();
@@ -353,6 +422,7 @@ int main(int argc, char** argv) {
 		}
 		else if (stairs) {
 			control.stop();
+			dir = MarioDirection::STOP;
 			control.smallJump();
 		}
 		else if (holeWidth > 30) {
@@ -393,12 +463,4 @@ int main(int argc, char** argv) {
 	}
 
 	return 0;
-}
-
-cv::Mat getHue(std::string loc) {
-	cv::Mat tmp = cv::imread(loc, CV_LOAD_IMAGE_COLOR);
-	cv::cvtColor(tmp, tmp, cv::COLOR_BGR2HSV);
-	cv::Mat ch[3];
-	cv::split(tmp, ch);
-	return ch[0];
 }
