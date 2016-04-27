@@ -196,7 +196,6 @@ bool Entity::updateState(cv::Mat image, int timeMS) {
 	cv::Mat result;
 	cv::Point minLoc;
 	cv::Point maxLoc;
-	cv::Point matchLoc;
 
 	double minVal;
 	double maxVal;
@@ -331,22 +330,23 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	cv::Mat result;
 	cv::Point minLoc;
 	cv::Point maxLoc;
-	cv::Point matchLoc;
-
 	double minVal;
 	double maxVal;
 	int method = cv::TM_SQDIFF;
-
 	int origWidth = image.size().width;
-	image = image(cv::Rect(0, 40, image.size().width, image.size().height - 40));
+	int result_cols;
+	int result_rows;
+
+	// Search the entire image (other than top 40) for bricks
+	cv::Mat brickImage = image(cv::Rect(0, 40, image.size().width, image.size().height - 40));
 
 	// Create the result matrix
-	int result_cols = image.cols - spriteTable[EntityType::BRICK].cols + 1;
-	int result_rows = image.rows - spriteTable[EntityType::BRICK].rows + 1;
+	result_cols = brickImage.cols - spriteTable[EntityType::BRICK].cols + 1;
+	result_rows = brickImage.rows - spriteTable[EntityType::BRICK].rows + 1;
 	result.create(result_rows, result_cols, CV_32FC1);
 
 	// Do the Matching and Normalize
-	cv::matchTemplate(image, spriteTable[EntityType::BRICK], result, method);
+	cv::matchTemplate(brickImage, spriteTable[EntityType::BRICK], result, method);
 	// Try and find the first enemy template
 	while (true) {
 		cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
@@ -364,11 +364,53 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 		result.at<float>(minLoc) = getDetThresh(EntityType::BRICK);
 	}
 
-	// Now only look at the right
+	// Search the bottom and the top for beams
+	cv::Mat beamSearchTop = image(cv::Rect(0, 0, image.size().width, 40));
+	cv::Mat beamSearchBot = image(cv::Rect(0, image.size().height - 40, image.size().width, 40));
+	
+	// Create the result matrix
+	result_cols = beamSearchTop.cols - spriteTable[EntityType::BEAM].cols + 1;
+	result_rows = beamSearchTop.rows - spriteTable[EntityType::BEAM].rows + 1;
+	result.create(result_rows, result_cols, CV_32FC1);
+
+	// Remove currently known beams
+	for (int i = 0; i < known.size(); i++) {
+		if (known[i].getType() == EntityType::BEAM) {
+			cv::Rect bbox = known[i].getBBox();
+			cv::rectangle(beamSearchTop, bbox, cv::Scalar::all(255), CV_FILLED);
+			bbox.y -= (image.size().height - 40);
+			cv::rectangle(beamSearchBot, bbox, cv::Scalar::all(255), CV_FILLED);
+		}
+	}
+
+	// Do the Matching and Normalize
+	cv::Mat resultTop, resultBot;
+	cv::Point minLocTop, minLocBot;
+	cv::Point maxLocTop, maxLocBot;
+	double minValTop, minValBot;
+	double maxValTop, maxValBot;
+	cv::matchTemplate(beamSearchTop, spriteTable[EntityType::BEAM], resultTop, method);
+	cv::matchTemplate(beamSearchBot, spriteTable[EntityType::BEAM], resultBot, method);
+	cv::imshow("top", beamSearchTop);
+
+	// Try and find the first enemy template
+	cv::minMaxLoc(resultTop, &minValTop, &maxValTop, &minLocTop, &maxLocTop, cv::Mat());
+	cv::minMaxLoc(resultBot, &minValBot, &maxValBot, &minLocBot, &maxLocBot, cv::Mat());
+	// minLoc = cv::Point(minLoc.x + spriteTable[t].cols - 1, minLoc.y + spriteTable[t].rows - 1);
+
+	if (minValTop < getDetThresh(EntityType::BEAM)) { // We found one
+		ret.push_back(Entity(minLocTop, EntityType::BEAM, timeMS));
+	}
+	if (minValBot < getDetThresh(EntityType::BEAM)) { // We found one
+		minLocBot.y += (image.size().height - 40);
+		ret.push_back(Entity(minLocBot, EntityType::BEAM, timeMS));
+	}
+
+	// Now only look at the right (regular entities)
 	image = image(cv::Rect(image.size().width - 40, 0, 40, image.size().height));
 
 	for (EntityType t = EntityType::GOOMBA; t != EntityType::SIZE_ENTITY_TYPE; t = static_cast<EntityType>(t + 1)) {
-		if (t == EntityType::HOLE || t == EntityType::BEAM || t == EntityType::BRICK) {
+		if (t == EntityType::HOLE || t == EntityType::BEAM || t == EntityType::BRICK || t == EntityType::BEAM) {
 			continue;
 		}
 		

@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
 		if (emulator_window != NULL) {
 			input = hwnd2mat(emulator_window);
 			if (input.empty()) {
-				std::cout << "Lost FCEUX" << std::endl;
+				std::cout << "Unable to extract frame" << std::endl;
 				return -1;
 			}
 		}
