@@ -43,7 +43,7 @@ void Controller::smallJump() {
 	if (!alreadyJumping) {
 		alreadyJumping = true;
 		kb.keyDown(jump);
-		std::thread thr(&Controller::jumpWatcher, this, GetTickCount() + 50);
+		std::thread thr(&Controller::jumpWatcher, this, GetTickCount() + 40);
 		thr.detach();
 	}
 }

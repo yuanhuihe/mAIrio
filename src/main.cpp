@@ -339,6 +339,7 @@ int main(int argc, char** argv) {
 			control.largeJump();
 		}
 		else if (stairs) {
+			control.stop();
 			control.smallJump();
 		}
 		else if (holeWidth > 30) {
