@@ -149,6 +149,10 @@ cv::Point Entity::getLoc() {
 	return loc;
 }
 
+cv::Point Entity::getCenter() {
+	return cv::Point(loc.x + bbox.x + bbox.width / 2, loc.y + bbox.y + bbox.height / 2);
+}
+
 cv::Rect Entity::getBBox() {
 	return cv::Rect(loc.x + bbox.x, loc.y + bbox.y, bbox.width, bbox.height);
 }

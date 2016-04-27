@@ -62,6 +62,7 @@ public:
 	std::vector<EntityType> Entity::nextStates();
 
 	cv::Point getLoc();
+	cv::Point getCenter();
 	cv::Rect getBBox();
 	cv::Mat getSprite();
 	EntityType getType();
