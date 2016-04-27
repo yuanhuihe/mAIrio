@@ -26,7 +26,7 @@ void Entity::setBoundingBox() {
 	//case EntityType::KOOPA_RED_R: bbox = cv::Rect(-2, -13, 16, 24); break;
 	case EntityType::SHELL: bbox = cv::Rect(-4, -3, 16, 14); break;
 	case EntityType::CHISELED: bbox = cv::Rect(-3, -3, 16, 16); break;
-	case EntityType::BEAM: bbox = cv::Rect(-2, -2, 48, 8); break;
+	case EntityType::BEAM: bbox = cv::Rect(-3, -3, 48, 8); break;
 	/*case EntityType::SHELL_RED: bbox = cv::Rect(-4, -3, 16, 14); break;
 	case EntityType::PIRANHA: bbox = cv::Rect(); break;
 	case EntityType::BRICK: bbox = cv::Rect(0, 0, 16, 16); break;
@@ -51,7 +51,7 @@ int Entity::getDetThresh(EntityType type) {
 	case EntityType::GOOMBA: detThresh = 780000; break;
 	case EntityType::KOOPA_L: detThresh = 150000; break;
 	case EntityType::KOOPA_R: detThresh = 150000; break;
-	case EntityType::PIPE: detThresh = 150000; break;
+	case EntityType::PIPE: detThresh = 250000; break;
 	case EntityType::QUESTION_Y: detThresh = 150000; break;
 	case EntityType::QUESTION_O: detThresh = 150000; break;
 	case EntityType::QUESTION_B: detThresh = 150000; break;
@@ -105,7 +105,7 @@ void Entity::fillSpriteTable(WorldType world) {
 	Entity::spriteTable[EntityType::QUESTION_O] = cv::imread("sprites/misc/" + worldStr + "/question2.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::QUESTION_B] = cv::imread("sprites/misc/" + worldStr + "/question3.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick_small.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::BEAM] = cv::imread("sprites/misc/shared/beam.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[EntityType::BEAM] = cv::imread("sprites/misc/shared/beam_cropped.png", CV_LOAD_IMAGE_COLOR);
 	/*Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick1.png", CV_LOAD_IMAGE_COLOR);
@@ -217,7 +217,7 @@ bool Entity::updateState(cv::Mat image, int timeMS) {
 		x_margin = 3;
 		y_margin = 0;
 	}
-	else if (type == EntityType::GOOMBA) {
+	else if (type == EntityType::GOOMBA || type == EntityType::BEAM) {
 		x_margin = 5;
 		y_margin = 10;
 	}
@@ -365,8 +365,8 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	}
 
 	// Search the bottom and the top for beams
-	cv::Mat beamSearchTop = image(cv::Rect(0, 0, image.size().width, 40));
-	cv::Mat beamSearchBot = image(cv::Rect(0, image.size().height - 40, image.size().width, 40));
+	cv::Mat beamSearchTop = image(cv::Rect(0, 24, image.size().width, 40)).clone();
+	cv::Mat beamSearchBot = image(cv::Rect(0, image.size().height - 40, image.size().width, 40)).clone();
 	
 	// Create the result matrix
 	result_cols = beamSearchTop.cols - spriteTable[EntityType::BEAM].cols + 1;
@@ -377,8 +377,9 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	for (int i = 0; i < known.size(); i++) {
 		if (known[i].getType() == EntityType::BEAM) {
 			cv::Rect bbox = known[i].getBBox();
+			bbox.y -= 24;
 			cv::rectangle(beamSearchTop, bbox, cv::Scalar::all(255), CV_FILLED);
-			bbox.y -= (image.size().height - 40);
+			bbox.y -= (image.size().height - 64);
 			cv::rectangle(beamSearchBot, bbox, cv::Scalar::all(255), CV_FILLED);
 		}
 	}
@@ -391,7 +392,6 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	double maxValTop, maxValBot;
 	cv::matchTemplate(beamSearchTop, spriteTable[EntityType::BEAM], resultTop, method);
 	cv::matchTemplate(beamSearchBot, spriteTable[EntityType::BEAM], resultBot, method);
-	cv::imshow("top", beamSearchTop);
 
 	// Try and find the first enemy template
 	cv::minMaxLoc(resultTop, &minValTop, &maxValTop, &minLocTop, &maxLocTop, cv::Mat());
@@ -399,6 +399,7 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	// minLoc = cv::Point(minLoc.x + spriteTable[t].cols - 1, minLoc.y + spriteTable[t].rows - 1);
 
 	if (minValTop < getDetThresh(EntityType::BEAM)) { // We found one
+		minLocTop.y += 24;
 		ret.push_back(Entity(minLocTop, EntityType::BEAM, timeMS));
 	}
 	if (minValBot < getDetThresh(EntityType::BEAM)) { // We found one

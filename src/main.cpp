@@ -47,6 +47,7 @@ int main(int argc, char** argv) {
 	cv::Mat blockImage;
 	cv::Mat blockMask(224, 256, CV_8U);
 	cv::Mat connComp;
+	WorldType world = WorldType::OVERWORLD;
 
 	for (int i = 0; i < 224; i++) {
 		for (int j = 0; j < 256; j++) {
@@ -59,7 +60,7 @@ int main(int argc, char** argv) {
 		} 
 	}
 
-	Entity::fillSpriteTable(WorldType::OVERWORLD);
+	Entity::fillSpriteTable(world);
 	
 	cv::namedWindow("Image", cv::WINDOW_AUTOSIZE);
 
@@ -84,7 +85,7 @@ int main(int argc, char** argv) {
 	Controller control(kb);
 
 	while (1) {
-		// control.runRight();
+		control.runRight();
 		start = GetTickCount();
 
 		/*if (newWorldType) {
@@ -107,6 +108,15 @@ int main(int argc, char** argv) {
 
 		// Get rid of alpha
 		cv::cvtColor(input, input, CV_RGBA2RGB);
+
+		if (input.at<cv::Vec3b>(0, 0)[0] == 252 && input.at<cv::Vec3b>(0, 0)[1] == 148 && input.at<cv::Vec3b>(0, 0)[2] == 92 && world != WorldType::OVERWORLD) {
+			world = WorldType::OVERWORLD;
+			Entity::fillSpriteTable(world);
+		}
+		else if (input.at<cv::Vec3b>(0, 0)[0] == 0 && input.at<cv::Vec3b>(0, 0)[1] == 0 && input.at<cv::Vec3b>(0, 0)[2] == 0 && world != WorldType::UNDERWORLD) {
+			world = WorldType::UNDERWORLD;
+			Entity::fillSpriteTable(world);
+		}
 
 		// Find Mario
 		mario.updateState(input, start);
@@ -168,14 +178,22 @@ int main(int argc, char** argv) {
 		bool stairs = false;
 		bool stairGap = false;
 		int holeWidth = 0;
+		bool forwardStairs = false;
+		bool overStairs = false;
+		bool beneathStairs = false;
 
 		// Should Mario Jump?
 		for (Entity e : known) {
 
-			bool forwardStairs = e.getType() == EntityType::CHISELED && e.getLoc().x - mario.getLoc().x < 16 &&
+			forwardStairs |= e.getType() == EntityType::CHISELED && e.getLoc().x - mario.getLoc().x < 24 &&
 				e.getLoc().x - mario.getLoc().x > 0 && abs(mario.getLoc().y - e.getLoc().y) < 8;
-			bool overStairs = e.getType() == EntityType::CHISELED && abs(e.getLoc().x - mario.getLoc().x) < mario.getBBox().width / 2
-				&& mario.getLoc().y < e.getLoc().y && abs(mario.getLoc().y - e.getLoc().y) < 32;
+
+			overStairs |= e.getType() == EntityType::CHISELED && abs(e.getLoc().x - mario.getLoc().x) < mario.getBBox().width / 2
+				&& mario.getLoc().y < e.getLoc().y && abs(mario.getLoc().y - e.getLoc().y) < 24;
+
+			beneathStairs |= e.getType() == EntityType::CHISELED && e.getLoc().x - mario.getLoc().x < 24 &&
+				e.getLoc().x - mario.getLoc().x > 0 && mario.getLoc().y - e.getLoc().y < 24 && mario.getLoc().y - e.getLoc().y > 8;
+			
 			// If Mario needs to jump over an enemy
 			if (e.isHostile() &&
 				e.inFrame() &&
@@ -199,7 +217,7 @@ int main(int argc, char** argv) {
 				break;
 			}
 			// If Mario needs to jump the gap between staircase
-			else if (overStairs) {
+			else if ((overStairs && !forwardStairs) || beneathStairs) {
 				stairGap = true;
 			}
 			// If Mario needs to climb a staircase
@@ -218,31 +236,32 @@ int main(int argc, char** argv) {
 
 		// Handle movement
 		if (closeEnemy && !farEnemy) {
-			// smallJump();
+			control.smallJump();
 		}
 		else if (closeEnemy && farEnemy) {
-			// control.mediumJump();
+			control.mediumJump();
 		}
 		else if (pipeHeight > 36) {
-			// control.largeJump();
+			control.largeJump();
 		}
 		else if (pipeHeight > 0) {
-			// control.mediumJump();
+			control.mediumJump();
 		}
 		else if (stairGap) {
-			// control.largeJump();
+			control.largeJump();
 		}
 		else if (stairs) {
-			// control.smallJump();
+			control.smallJump();
 		}
 		else if (holeWidth > 30) {
-			// control.mediumJump();
+			control.mediumJump();
 		}
 		else if (holeWidth > 0) {
-			// control.smallJump();
+			control.smallJump();
 		}
 
-		std::cout << "Far: " << farEnemy << " Close: " << closeEnemy << " Pipe: " << pipeHeight << " Stairs: " << stairs << " Stair Gap: " << stairGap << " Hole: " << holeWidth << std::endl;
+		std::cout << " Forward: " << forwardStairs << " Over: " << overStairs << " Under: " << beneathStairs << std::endl;
+		//  "Far: " << farEnemy << " Close: " << closeEnemy << " Pipe: " << pipeHeight << " Hole: " << holeWidth 
 
 		// std::cout << known.size() << std::endl;
 
