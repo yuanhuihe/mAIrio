@@ -24,13 +24,13 @@ void Entity::setBoundingBox() {
 	case EntityType::QUESTION_O: bbox = cv::Rect(-3, -3, 16, 16); break;
 	case EntityType::QUESTION_B: bbox = cv::Rect(-3, -3, 16, 16); break;
 	case EntityType::BRICK: bbox = cv::Rect(0, -1, 8, 9); break;
-	//case EntityType::KOOPA_RED_L: bbox = cv::Rect(-5, -13, 16, 24); break;
-	//case EntityType::KOOPA_RED_R: bbox = cv::Rect(-2, -13, 16, 24); break;
+	case EntityType::KOOPA_RED_L: bbox = cv::Rect(-5, -13, 16, 24); break;
+	case EntityType::KOOPA_RED_R: bbox = cv::Rect(-2, -13, 16, 24); break;
 	case EntityType::SHELL: bbox = cv::Rect(-4, -3, 16, 14); break;
 	case EntityType::CHISELED: bbox = cv::Rect(-3, -3, 16, 16); break;
 	case EntityType::BEAM: bbox = cv::Rect(-3, -3, 48, 8); break;
-	/*case EntityType::SHELL_RED: bbox = cv::Rect(-4, -3, 16, 14); break;
-	case EntityType::PIRANHA: bbox = cv::Rect(); break;
+	case EntityType::SHELL_RED: bbox = cv::Rect(-4, -3, 16, 14); break;
+	/*case EntityType::PIRANHA: bbox = cv::Rect(); break;
 	case EntityType::BRICK: bbox = cv::Rect(0, 0, 16, 16); break;
 	case EntityType::ROCK: bbox = cv::Rect(); break;
 	case EntityType::FLAGPOLE: bbox = cv::Rect(); break;
@@ -58,13 +58,13 @@ int Entity::getDetThresh(EntityType type) {
 	case EntityType::QUESTION_O: detThresh = 150000; break;
 	case EntityType::QUESTION_B: detThresh = 150000; break;
 	case EntityType::BRICK: detThresh = 10000; break;
-	//case EntityType::KOOPA_RED_L: detThresh = 150000; break;
-	//case EntityType::KOOPA_RED_R: detThresh = 150000; break;
+	case EntityType::KOOPA_RED_L: detThresh = 150000; break;
+	case EntityType::KOOPA_RED_R: detThresh = 150000; break;
 	case EntityType::SHELL: detThresh = 150000; break;
 	case EntityType::CHISELED: detThresh = 150000; break;
 	case EntityType::BEAM: detThresh = 150000; break;
-	/*case EntityType::SHELL_RED: detThresh = 150000; break;
-	case EntityType::PIRANHA: detThresh = 150000; break;
+	case EntityType::SHELL_RED: detThresh = 150000; break;
+	/*case EntityType::PIRANHA: detThresh = 150000; break;
 	case EntityType::BRICK: detThresh = 150000; break;
 	case EntityType::QUESTION: detThresh = 150000; break;
 	case EntityType::ROCK: detThresh = 150000; break;
@@ -100,8 +100,8 @@ void Entity::fillSpriteTable(WorldType world) {
 	Entity::spriteTable[EntityType::GOOMBA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::KOOPA_L] = cv::imread("sprites/enemies/" + worldStr + "/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::KOOPA_R] = cv::imread("sprites/enemies/" + worldStr + "/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
-	//Entity::spriteTable[EntityType::KOOPA_RED_L] = cv::imread("sprites/enemies/shared/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
-	//Entity::spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::KOOPA_RED_L] = cv::imread("sprites/enemies/shared/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::PIPE] = cv::imread("sprites/misc/shared/pipe-cropped.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::CHISELED] = cv::imread("sprites/misc/" + worldStr + "/block-chiseled.png", CV_LOAD_IMAGE_COLOR);
@@ -110,8 +110,8 @@ void Entity::fillSpriteTable(WorldType world) {
 	Entity::spriteTable[EntityType::QUESTION_B] = cv::imread("sprites/misc/" + worldStr + "/question3.png", CV_LOAD_IMAGE_COLOR);
 	Entity::spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick_smaller.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::BEAM] = cv::imread("sprites/misc/shared/beam_cropped.png", CV_LOAD_IMAGE_COLOR);
-	/*Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
+	Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
+	/*spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick1.png", CV_LOAD_IMAGE_COLOR);
 	spriteTable[EntityType::QUESTION]
 	spriteTable[EntityType::ROCK]
@@ -193,7 +193,8 @@ bool Entity::isHostile() { // Technically should also return true for a moving s
 	case EntityType::GOOMBA:
 	case EntityType::KOOPA_R:
 	case EntityType::KOOPA_L:
-	case EntityType::SHELL:
+	case EntityType::KOOPA_RED_R:
+	case EntityType::KOOPA_RED_L:
 		return true;
 	default:
 		return false;
@@ -220,13 +221,9 @@ bool Entity::updateState(cv::Mat image, int timeMS) {
 		type == EntityType::MARIO_FIRE_R) {
 		x_margin = 10;
 		y_margin = 10;
-	} 
-	else if (type == EntityType::BRICK) {
-		x_margin = 3;
-		y_margin = 0;
 	}
 	else if (type == EntityType::GOOMBA || type == EntityType::BEAM) {
-		x_margin = 5;
+		x_margin = 6;
 		y_margin = 10;
 	}
 	else {
@@ -308,7 +305,7 @@ bool Entity::inFrame() {
 	return isInFrame;
 }
 
-std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int timeMS) {
+std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int timeMS, bool newWorldType) {
 	std::vector<Entity> ret;
 
 	// Find holes in the ground
@@ -403,7 +400,7 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	cv::matchTemplate(beamSearchTop, spriteTable[EntityType::BEAM], resultTop, method);
 	cv::matchTemplate(beamSearchBot, spriteTable[EntityType::BEAM], resultBot, method);
 
-	// Try and find the first enemy template
+	// Try and find the first beam template
 	cv::minMaxLoc(resultTop, &minValTop, &maxValTop, &minLocTop, &maxLocTop, cv::Mat());
 	cv::minMaxLoc(resultBot, &minValBot, &maxValBot, &minLocBot, &maxLocBot, cv::Mat());
 	// minLoc = cv::Point(minLoc.x + spriteTable[t].cols - 1, minLoc.y + spriteTable[t].rows - 1);
@@ -417,8 +414,12 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 		ret.push_back(Entity(minLocBot, EntityType::BEAM, timeMS));
 	}
 
-	// Now only look at the right (regular entities)
-	image = image(cv::Rect(image.size().width - 40, 40, 40, image.size().height - 40));
+	// Now only look at the right (regular entities) unless we are in a new world
+	int watchWidth = 40;
+	if (newWorldType) {
+		watchWidth = image.size().width;
+	}
+	image = image(cv::Rect(image.size().width - watchWidth, 40, watchWidth, image.size().height - 40));
 
 	for (EntityType t = EntityType::GOOMBA; t != EntityType::SIZE_ENTITY_TYPE; t = static_cast<EntityType>(t + 1)) {
 		if (t == EntityType::HOLE || t == EntityType::BEAM || t == EntityType::BRICK || t == EntityType::BEAM) {
@@ -444,14 +445,21 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 		// Do the Matching and Normalize
 		cv::matchTemplate(maskedImage, spriteTable[t], result, method);
 
-		// Try and find the first enemy template
-		cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
-		// minLoc = cv::Point(minLoc.x + spriteTable[t].cols - 1, minLoc.y + spriteTable[t].rows - 1);
+		while (true) {
+			cv::minMaxLoc(result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat());
+			// minLoc = cv::Point(minLoc.x + spriteTable[t].cols - 1, minLoc.y + spriteTable[t].rows - 1);
 
-		if (minVal < getDetThresh(t)) { // We found one
-			minLoc.x += (origWidth - maskedImage.cols);
-			minLoc.y += 40;
-			ret.push_back(Entity(minLoc, t, timeMS));
+			if (minVal < getDetThresh(t)) {
+				cv::Point originLoc = minLoc;
+				originLoc.x += (origWidth - maskedImage.cols);
+				originLoc.y += 40;
+				ret.push_back(Entity(originLoc, t, timeMS));
+			}
+			else {
+				break;
+			}
+
+			result.at<float>(minLoc) = getDetThresh(t);
 		}
 	}
 
@@ -512,8 +520,21 @@ std::vector<EntityType> Entity::nextStates() {
 		ret.push_back(EntityType::KOOPA_L);
 		ret.push_back(EntityType::SHELL);
 		break;
+	case EntityType::KOOPA_RED_L:
+		ret.push_back(EntityType::KOOPA_RED_L);
+		ret.push_back(EntityType::KOOPA_RED_R);
+		ret.push_back(EntityType::SHELL_RED);
+		break;
+	case EntityType::KOOPA_RED_R:
+		ret.push_back(EntityType::KOOPA_RED_R);
+		ret.push_back(EntityType::KOOPA_RED_L);
+		ret.push_back(EntityType::SHELL_RED);
+		break;
 	case EntityType::SHELL:
 		ret.push_back(EntityType::SHELL);
+		break;
+	case EntityType::SHELL_RED:
+		ret.push_back(EntityType::SHELL_RED);
 		break;
 	case EntityType::PIPE:
 		ret.push_back(EntityType::PIPE);

@@ -14,6 +14,8 @@
 #include "Keyboard.h"
 #include "Controller.h"
 
+#define DEBUG 0
+
 cv::Mat getHue(std::string loc);
 
 // Global Window handle
@@ -53,8 +55,9 @@ int main(int argc, char** argv) {
 	cv::Mat blockImage;
 	cv::Mat blockMask(224, 256, CV_8U);
 	cv::Mat connComp;
-	WorldType world = WorldType::OVERWORLD;
+	WorldType world = WorldType::UNKNOWN;
 	MarioDirection dir = MarioDirection::STOP;
+	int newWorldCounter = 0;
 
 	for (int i = 0; i < 224; i++) {
 		for (int j = 0; j < 256; j++) {
@@ -110,13 +113,37 @@ int main(int argc, char** argv) {
 		// Get rid of alpha
 		cv::cvtColor(input, input, CV_RGBA2RGB);
 
-		if (input.at<cv::Vec3b>(0, 0)[0] == 252 && input.at<cv::Vec3b>(0, 0)[1] == 148 && input.at<cv::Vec3b>(0, 0)[2] == 92 && world != WorldType::OVERWORLD) {
-			world = WorldType::OVERWORLD;
-			Entity::fillSpriteTable(world);
+		bool entireLeftSideNotBlack = false;
+		for (int i = 0; i < input.rows; i++) {
+			if (input.at<cv::Vec3b>(i, 0) != cv::Vec3b(0, 0, 0)) {
+				entireLeftSideNotBlack = true;
+				break;
+			}
 		}
-		else if (input.at<cv::Vec3b>(0, 0)[0] == 0 && input.at<cv::Vec3b>(0, 0)[1] == 0 && input.at<cv::Vec3b>(0, 0)[2] == 0 && world != WorldType::UNDERWORLD) {
-			world = WorldType::UNDERWORLD;
-			Entity::fillSpriteTable(world);
+		if (entireLeftSideNotBlack) {
+			if (input.at<cv::Vec3b>(0, 0)[0] == 252 && input.at<cv::Vec3b>(0, 0)[1] == 148 && input.at<cv::Vec3b>(0, 0)[2] == 92) {
+				if (world != WorldType::OVERWORLD) {
+					world = WorldType::OVERWORLD;
+					Entity::fillSpriteTable(world);
+					newWorldCounter = 3;
+				}
+				else if (newWorldCounter > 0) {
+					newWorldCounter--;
+				}
+			}
+			else if (input.at<cv::Vec3b>(0, 0)[0] == 0 && input.at<cv::Vec3b>(0, 0)[1] == 0 && input.at<cv::Vec3b>(0, 0)[2] == 0) {
+				if (world != WorldType::UNDERWORLD) {
+					world = WorldType::UNDERWORLD;
+					Entity::fillSpriteTable(world);
+					newWorldCounter = true;
+				}
+				else if (newWorldCounter > 0) {
+					newWorldCounter--;
+				}
+			}
+		}
+		else {
+			world == WorldType::UNKNOWN;
 		}
 
 		// Find Mario
@@ -140,7 +167,7 @@ int main(int argc, char** argv) {
 		}
 
 		// Detect new sprites
-		std::vector<Entity> newEntities = Entity::watch(input, known, start);
+		std::vector<Entity> newEntities = Entity::watch(input, known, start, newWorldCounter > 0);
 		std::vector<Entity> holes;
 		std::vector<Entity> bricks;
 
@@ -190,6 +217,10 @@ int main(int argc, char** argv) {
 		bool closeEnemyLeft = false;
 		bool stairsInForwardArea = false;
 		bool enemyInStairArea = false;
+		bool deathFromBelow = false;
+		bool overRightStair = false;
+		bool onBeam = false;
+		bool beamJump = false;
 
 		cv::Scalar marioFarRightAboveCenterColor = cv::Scalar(0, 255, 0);
 		cv::Point marioFarRightAboveCenter = mario.getCenter();
@@ -232,6 +263,15 @@ int main(int argc, char** argv) {
 		cv::Point marioUnderCenter = mario.getCenter();
 		marioUnderCenter.y += 16;
 
+		cv::Scalar marioDirectlyUnderCenterColor = cv::Scalar(0, 255, 0);
+		cv::Point marioDirectlyUnderCenter = mario.getCenter();
+		marioDirectlyUnderCenter.y += 12;
+
+		cv::Scalar marioUnderForwardColor = cv::Scalar(0, 255, 0);
+		cv::Point marioUnderForward = mario.getCenter();
+		marioUnderForward.y += 16;
+		marioUnderForward.x += 16;
+
 		cv::Scalar marioAboveCenterColor = cv::Scalar(0, 255, 0);
 		cv::Point marioAboveCenter = mario.getCenter();
 		marioAboveCenter.x += 16;
@@ -266,6 +306,7 @@ int main(int argc, char** argv) {
 			forwardStairs |= e.getType() == EntityType::CHISELED && e.getBBox().contains(marioForwardCenter);
 			overStairs |= e.getType() == EntityType::CHISELED && e.getBBox().contains(marioUnderCenter);
 			beneathStairs |= e.getType() == EntityType::CHISELED && e.getBBox().contains(marioAboveCenter);
+			overRightStair |= e.getType() == EntityType::CHISELED && e.getBBox().contains(marioUnderForward);
 
 			if (forwardStairs) {
 				marioForwardCenterColor = cv::Scalar(0, 255, 255);
@@ -277,6 +318,18 @@ int main(int argc, char** argv) {
 
 			if (beneathStairs) {
 				marioAboveCenterColor = cv::Scalar(0, 255, 255);
+			}
+
+			if (overRightStair) {
+				marioUnderForwardColor = cv::Scalar(0, 255, 255);
+			}
+
+			if (e.getType() == EntityType::BEAM && e.getBBox().contains(marioDirectlyUnderCenter)) {
+				onBeam = true;
+				marioDirectlyUnderCenterColor = cv::Scalar(0, 255, 255);
+				if (e.getCenter().x <= mario.getCenter().x) {
+					beamJump = true;
+				}
 			}
 
 			// If Mario needs to jump over an enemy
@@ -328,7 +381,7 @@ int main(int argc, char** argv) {
 
 			if (e.isHostile() && (e.getBBox() & marioDeathFromBelowArea).area() > 0) {
 				marioDeathFromBelowAreaColor = cv::Scalar(0, 255, 255);
-				deathFromAbove = true;
+				deathFromBelow = true;
 			}
 
 			if (e.isHostile() &&
@@ -356,33 +409,43 @@ int main(int argc, char** argv) {
 		}
 		// If mario needs to jump over holes on the ground
 		for (Entity e : holes) {
-			if (e.getLoc().x - mario.getLoc().x < 16 &&
-				e.getLoc().x - mario.getLoc().x > 0) {
+			int jumpPreemption = 16;
+			if (mario.getLoc().y < 136) {
+				jumpPreemption = 48;
+			}
+			if (e.getLoc().x - mario.getLoc().x < jumpPreemption &&
+				(e.getLoc().x + e.getBBox().width) - mario.getLoc().x > 0) {
 				holeWidth = e.getBBox().width;
 				break;
 			}
 		}
 
-		cv::circle(input, marioForwardCenter, 1, marioForwardCenterColor, 2);
-		cv::circle(input, marioReverseCenter, 1, marioReverseCenterColor, 2);
-		cv::circle(input, marioUnderCenter, 1, marioUnderCenterColor, 2);
-		cv::circle(input, marioAboveCenter, 1, marioAboveCenterColor, 2);
-		cv::circle(input, marioFarAboveCenter, 1, marioFarAboveCenterColor, 2);
-		cv::circle(input, marioFarForwardCenter, 1, marioFarForwardCenterColor, 2);
-		cv::circle(input, marioStraightAboveCenter, 1, marioStraightAboveCenterColor, 2);
-		cv::circle(input, marioFarRightAboveCenter, 1, marioFarRightAboveCenterColor, 2);
-		cv::rectangle(input, marioForwardArea, marioForwardAreaColor, 2);
-		cv::rectangle(input, marioDeathFromAboveArea, marioDeathFromAboveAreaColor, 2);
-		cv::rectangle(input, marioDeathFromBelowArea, marioDeathFromBelowAreaColor, 2);
-		for (int i = 0; i < 4; i++) {
-			cv::rectangle(input, marioStairArea[i], marioStairAreaColor, 2);
+		if (DEBUG) {
+			cv::circle(input, marioForwardCenter, 1, marioForwardCenterColor, 2);
+			cv::circle(input, marioUnderForward, 1, marioUnderForwardColor, 2);
+			cv::circle(input, marioReverseCenter, 1, marioReverseCenterColor, 2);
+			cv::circle(input, marioUnderCenter, 1, marioUnderCenterColor, 2);
+			cv::circle(input, marioAboveCenter, 1, marioAboveCenterColor, 2);
+			cv::circle(input, marioFarAboveCenter, 1, marioFarAboveCenterColor, 2);
+			cv::circle(input, marioFarForwardCenter, 1, marioFarForwardCenterColor, 2);
+			cv::circle(input, marioStraightAboveCenter, 1, marioStraightAboveCenterColor, 2);
+			cv::circle(input, marioFarRightAboveCenter, 1, marioFarRightAboveCenterColor, 2);
+			cv::circle(input, marioDirectlyUnderCenter, 1, marioDirectlyUnderCenterColor, 2);
+			cv::rectangle(input, marioForwardArea, marioForwardAreaColor, 2);
+			cv::rectangle(input, marioDeathFromAboveArea, marioDeathFromAboveAreaColor, 2);
+			cv::rectangle(input, marioDeathFromBelowArea, marioDeathFromBelowAreaColor, 2);
+			for (int i = 0; i < 4; i++) {
+				cv::rectangle(input, marioStairArea[i], marioStairAreaColor, 2);
+			}
 		}
 
-		if (brickAbove && (closeEnemy || farEnemy || enemyInForwardArea)) {
+		std::cout << onBeam << " " << beamJump << std::endl;
+
+		if ((brickAbove && (closeEnemy || farEnemy || enemyInForwardArea)) || (deathFromAbove && world == WorldType::UNDERWORLD)) {
 			control.runLeft();
 			dir = MarioDirection::LEFT;
 		}
-		else if (deathFromAbove || (stairsInForwardArea && enemyInStairArea)) {
+		else if (deathFromBelow || (stairsInForwardArea && enemyInStairArea)) {
 			control.stop();
 			dir = MarioDirection::STOP;
 			std::cout << "Stop!" << start << std::endl;
@@ -425,10 +488,12 @@ int main(int argc, char** argv) {
 			dir = MarioDirection::STOP;
 			control.smallJump();
 		}
-		else if (holeWidth > 30) {
-			control.mediumJump();
+		else if (holeWidth > 30 && holeWidth < 200) {
+			if ((onBeam && beamJump) || !onBeam) {
+				control.mediumJump();
+			}
 		}
-		else if (holeWidth > 0) {
+		else if (holeWidth > 0 && holeWidth <= 30) {
 			control.smallJump();
 		}
 

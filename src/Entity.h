@@ -6,7 +6,8 @@
 
 enum WorldType {
 	OVERWORLD,
-	UNDERWORLD
+	UNDERWORLD,
+	UNKNOWN
 };
 
 enum EntityType {
@@ -19,8 +20,8 @@ enum EntityType {
 	GOOMBA,
 	KOOPA_L,
 	KOOPA_R,
-	//KOOPA_RED_L,
-	//KOOPA_RED_R,
+	KOOPA_RED_L,
+	KOOPA_RED_R,
 	SHELL,
 	PIPE,
 	HOLE,
@@ -30,8 +31,8 @@ enum EntityType {
 	QUESTION_B,
 	BRICK,
 	BEAM,
-	/*SHELL_RED,
-	PIRANHA, // We're going to check color above pipes to check for Piranhas, not template matching
+	SHELL_RED,
+	/*PIRANHA, // We're going to check color above pipes to check for Piranhas, not template matching
 	BRICK,
 	ROCK, // Includes chiseled block and used block
 	FLAGPOLE,
@@ -59,7 +60,7 @@ public:
 	static int getDetThresh(EntityType type);
 	static cv::Mat spriteTable[EntityType::SIZE_ENTITY_TYPE];
 	static void fillSpriteTable(WorldType world);
-	static std::vector<Entity> watch(cv::Mat image, std::vector<Entity> known, int timeMS);
+	static std::vector<Entity> watch(cv::Mat image, std::vector<Entity> known, int timeMS, bool newWorldType);
 	std::vector<EntityType> Entity::nextStates();
 
 	cv::Point getLoc();
