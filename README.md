@@ -1,4 +1,4 @@
-![mAIrio](http://imgur.com/EB7P2hW)
+![mAIrio](http://i.imgur.com/EB7P2hW.png)
 
 Ben Williams, Quinn Murphy - 2015
 
