@@ -97,20 +97,20 @@ void Entity::fillSpriteTable(WorldType world) {
 	spriteTable[EntityType::MARIO_BIG_R] = cv::imread("sprites/mario/mario-big-right.png");;
 	spriteTable[EntityType::MARIO_FIRE_L] = cv::imread("sprites/mario/mario-fire-left.png");
 	spriteTable[EntityType::MARIO_FIRE_R] = cv::imread("sprites/mario/mario-fire-right.png");
-	Entity::spriteTable[EntityType::GOOMBA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png");
-	Entity::spriteTable[EntityType::KOOPA_L] = cv::imread("sprites/enemies/" + worldStr + "/koopa-l-template.png");
-	Entity::spriteTable[EntityType::KOOPA_R] = cv::imread("sprites/enemies/" + worldStr + "/koopa-r-template.png");
-	Entity::spriteTable[EntityType::KOOPA_RED_L] = cv::imread("sprites/enemies/shared/koopa-l-template.png");
-	Entity::spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png");
-	Entity::spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png");
-	Entity::spriteTable[EntityType::PIPE] = cv::imread("sprites/misc/shared/pipe-cropped.png");
-	Entity::spriteTable[EntityType::CHISELED] = cv::imread("sprites/misc/" + worldStr + "/block-chiseled.png");
-	Entity::spriteTable[EntityType::QUESTION_Y] = cv::imread("sprites/misc/" + worldStr + "/question1.png");
-	Entity::spriteTable[EntityType::QUESTION_O] = cv::imread("sprites/misc/" + worldStr + "/question2.png");
-	Entity::spriteTable[EntityType::QUESTION_B] = cv::imread("sprites/misc/" + worldStr + "/question3.png");
-	Entity::spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick_smaller.png");
+	spriteTable[EntityType::GOOMBA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png");
+	spriteTable[EntityType::KOOPA_L] = cv::imread("sprites/enemies/" + worldStr + "/koopa-l-template.png");
+	spriteTable[EntityType::KOOPA_R] = cv::imread("sprites/enemies/" + worldStr + "/koopa-r-template.png");
+	spriteTable[EntityType::KOOPA_RED_L] = cv::imread("sprites/enemies/shared/koopa-l-template.png");
+	spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png");
+	spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png");
+	spriteTable[EntityType::PIPE] = cv::imread("sprites/misc/shared/pipe-cropped.png");
+	spriteTable[EntityType::CHISELED] = cv::imread("sprites/misc/" + worldStr + "/block-chiseled.png");
+	spriteTable[EntityType::QUESTION_Y] = cv::imread("sprites/misc/" + worldStr + "/question1.png");
+	spriteTable[EntityType::QUESTION_O] = cv::imread("sprites/misc/" + worldStr + "/question2.png");
+	spriteTable[EntityType::QUESTION_B] = cv::imread("sprites/misc/" + worldStr + "/question3.png");
+	spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick_smaller.png");
 	spriteTable[EntityType::BEAM] = cv::imread("sprites/misc/shared/beam_cropped.png");
-	Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png");
+	spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png");
 	/*spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png");
 	spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick1.png");
 	spriteTable[EntityType::QUESTION]
@@ -311,8 +311,9 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	// Find holes in the ground
 	int startX = -1;
 	int endX = -1;
+	int row = image.rows / 2;
 	for (int i = 0; i < image.cols; i++) {
-		while (image.at<cv::Vec3b>(205, i) == holeColor) {
+		while (image.at<cv::Vec3b>(row, i) == holeColor) {
 			if (startX > -1) {
 				endX = i;
 			}
@@ -327,7 +328,7 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 
 		if (startX > -1) {
 			if (endX - startX > 16) {
-				ret.push_back(Entity(cv::Rect(startX, 205, endX - startX, 5), EntityType::HOLE, timeMS));
+				ret.push_back(Entity(cv::Rect(startX, row, endX - startX, 5), EntityType::HOLE, timeMS));
 			}
 			startX = -1;
 			endX = -1;
@@ -343,13 +344,18 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	int origWidth = image.size().width;
 	int result_cols;
 	int result_rows;
+	int half_height = image.size().height / 2;
 
 	// Search the entire image (other than top 40) for bricks
-	cv::Mat brickImage = image(cv::Rect(0, 40, image.size().width, image.size().height - 40));
+	cv::Mat brickImage = image(cv::Rect(0, half_height, image.size().width, half_height));
 
 	// Create the result matrix
 	result_cols = brickImage.cols - spriteTable[EntityType::BRICK].cols + 1;
 	result_rows = brickImage.rows - spriteTable[EntityType::BRICK].rows + 1;
+	if (result_cols < 1 || result_rows < 1)
+	{
+		return ret;
+	}
 	result.create(result_rows, result_cols, CV_32FC1);
 
 	// Do the Matching and Normalize
@@ -361,7 +367,7 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 
 		if (minVal < getDetThresh(EntityType::BRICK)) {
 			cv::Point originLoc = minLoc;
-			originLoc.y += 40;
+			originLoc.y += half_height;
 			ret.push_back(Entity(originLoc, EntityType::BRICK, timeMS));
 		}
 		else {
@@ -372,8 +378,8 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	}
 
 	// Search the bottom and the top for beams
-	cv::Mat beamSearchTop = image(cv::Rect(0, 24, image.size().width, 40)).clone();
-	cv::Mat beamSearchBot = image(cv::Rect(0, image.size().height - 40, image.size().width, 40)).clone();
+	cv::Mat beamSearchTop = image(cv::Rect(0, 0, image.size().width, half_height)).clone();
+	cv::Mat beamSearchBot = image(cv::Rect(0, half_height, image.size().width, half_height)).clone();
 	
 	// Create the result matrix
 	result_cols = beamSearchTop.cols - spriteTable[EntityType::BEAM].cols + 1;
@@ -384,9 +390,9 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 	for (int i = 0; i < known.size(); i++) {
 		if (known[i].getType() == EntityType::BEAM) {
 			cv::Rect bbox = known[i].getBBox();
-			bbox.y -= 24;
+			bbox.y -= half_height;
 			cv::rectangle(beamSearchTop, bbox, cv::Scalar::all(255), cv::FILLED);
-			bbox.y -= (image.size().height - 64);
+			bbox.y -= half_height;
 			cv::rectangle(beamSearchBot, bbox, cv::Scalar::all(255), cv::FILLED);
 		}
 	}

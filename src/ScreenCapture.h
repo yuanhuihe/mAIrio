@@ -26,6 +26,12 @@ Mat hwnd2mat(HWND hwnd) {
 
 	RECT windowsize;    // get the height and width of the screen
 	GetClientRect(hwnd, &windowsize);
+	DWORD err = GetLastError();
+	if (err != 0)
+	{
+		std::cout << "Failed capture: error code = " << err << std::endl;
+		return src;
+	}
 
 	srcheight = windowsize.bottom;
 	srcwidth = windowsize.right;
