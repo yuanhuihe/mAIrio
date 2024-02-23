@@ -91,28 +91,28 @@ void Entity::fillSpriteTable(WorldType world) {
 	std::cout << worldStr << std::endl;
 
 	// Fill spriteTable
-	spriteTable[EntityType::MARIO_SMALL_L] = cv::imread("sprites/mario/mario-small-left.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::MARIO_SMALL_R] = cv::imread("sprites/mario/mario-small-right.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::MARIO_BIG_L] = cv::imread("sprites/mario/mario-big-left.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::MARIO_BIG_R] = cv::imread("sprites/mario/mario-big-right.png", CV_LOAD_IMAGE_COLOR);;
-	spriteTable[EntityType::MARIO_FIRE_L] = cv::imread("sprites/mario/mario-fire-left.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::MARIO_FIRE_R] = cv::imread("sprites/mario/mario-fire-right.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::GOOMBA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::KOOPA_L] = cv::imread("sprites/enemies/" + worldStr + "/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::KOOPA_R] = cv::imread("sprites/enemies/" + worldStr + "/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::KOOPA_RED_L] = cv::imread("sprites/enemies/shared/koopa-l-template.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::PIPE] = cv::imread("sprites/misc/shared/pipe-cropped.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::CHISELED] = cv::imread("sprites/misc/" + worldStr + "/block-chiseled.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::QUESTION_Y] = cv::imread("sprites/misc/" + worldStr + "/question1.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::QUESTION_O] = cv::imread("sprites/misc/" + worldStr + "/question2.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::QUESTION_B] = cv::imread("sprites/misc/" + worldStr + "/question3.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick_smaller.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::BEAM] = cv::imread("sprites/misc/shared/beam_cropped.png", CV_LOAD_IMAGE_COLOR);
-	Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png", CV_LOAD_IMAGE_COLOR);
-	/*spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png", CV_LOAD_IMAGE_COLOR);
-	spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick1.png", CV_LOAD_IMAGE_COLOR);
+	spriteTable[EntityType::MARIO_SMALL_L] = cv::imread("sprites/mario/mario-small-left.png");
+	spriteTable[EntityType::MARIO_SMALL_R] = cv::imread("sprites/mario/mario-small-right.png");
+	spriteTable[EntityType::MARIO_BIG_L] = cv::imread("sprites/mario/mario-big-left.png");
+	spriteTable[EntityType::MARIO_BIG_R] = cv::imread("sprites/mario/mario-big-right.png");;
+	spriteTable[EntityType::MARIO_FIRE_L] = cv::imread("sprites/mario/mario-fire-left.png");
+	spriteTable[EntityType::MARIO_FIRE_R] = cv::imread("sprites/mario/mario-fire-right.png");
+	Entity::spriteTable[EntityType::GOOMBA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png");
+	Entity::spriteTable[EntityType::KOOPA_L] = cv::imread("sprites/enemies/" + worldStr + "/koopa-l-template.png");
+	Entity::spriteTable[EntityType::KOOPA_R] = cv::imread("sprites/enemies/" + worldStr + "/koopa-r-template.png");
+	Entity::spriteTable[EntityType::KOOPA_RED_L] = cv::imread("sprites/enemies/shared/koopa-l-template.png");
+	Entity::spriteTable[EntityType::KOOPA_RED_R] = cv::imread("sprites/enemies/shared/koopa-r-template.png");
+	Entity::spriteTable[EntityType::SHELL] = cv::imread("sprites/enemies/" + worldStr + "/shell-template.png");
+	Entity::spriteTable[EntityType::PIPE] = cv::imread("sprites/misc/shared/pipe-cropped.png");
+	Entity::spriteTable[EntityType::CHISELED] = cv::imread("sprites/misc/" + worldStr + "/block-chiseled.png");
+	Entity::spriteTable[EntityType::QUESTION_Y] = cv::imread("sprites/misc/" + worldStr + "/question1.png");
+	Entity::spriteTable[EntityType::QUESTION_O] = cv::imread("sprites/misc/" + worldStr + "/question2.png");
+	Entity::spriteTable[EntityType::QUESTION_B] = cv::imread("sprites/misc/" + worldStr + "/question3.png");
+	Entity::spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick_smaller.png");
+	spriteTable[EntityType::BEAM] = cv::imread("sprites/misc/shared/beam_cropped.png");
+	Entity::spriteTable[EntityType::SHELL_RED] = cv::imread("sprites/enemies/shared/shell-template.png");
+	/*spriteTable[EntityType::PIRANHA] = cv::imread("sprites/enemies/" + worldStr + "/goomba-template.png");
+	spriteTable[EntityType::BRICK] = cv::imread("sprites/misc/" + worldStr + "/brick1.png");
 	spriteTable[EntityType::QUESTION]
 	spriteTable[EntityType::ROCK]
 	spriteTable[EntityType::FLAGPOLE]
@@ -385,9 +385,9 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 		if (known[i].getType() == EntityType::BEAM) {
 			cv::Rect bbox = known[i].getBBox();
 			bbox.y -= 24;
-			cv::rectangle(beamSearchTop, bbox, cv::Scalar::all(255), CV_FILLED);
+			cv::rectangle(beamSearchTop, bbox, cv::Scalar::all(255), cv::FILLED);
 			bbox.y -= (image.size().height - 64);
-			cv::rectangle(beamSearchBot, bbox, cv::Scalar::all(255), CV_FILLED);
+			cv::rectangle(beamSearchBot, bbox, cv::Scalar::all(255), cv::FILLED);
 		}
 	}
 
@@ -438,7 +438,7 @@ std::vector<Entity> Entity::watch(cv::Mat image, std::vector<Entity> known, int 
 				bbox.x -= (origWidth - maskedImage.cols);
 				bbox.y -= 40;
 				// std::cout << bbox.x << std::endl;
-				cv::rectangle(maskedImage, bbox, cv::Scalar::all(255), CV_FILLED);
+				cv::rectangle(maskedImage, bbox, cv::Scalar::all(255), cv::FILLED);
 			}
 		}
 

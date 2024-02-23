@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
 		}
 
 		// Get rid of alpha
-		cv::cvtColor(input, input, CV_RGBA2RGB);
+		cv::cvtColor(input, input, COLOR_RGBA2RGB);
 
 		bool entireLeftSideNotBlack = false;
 		for (int i = 0; i < input.rows; i++) {
